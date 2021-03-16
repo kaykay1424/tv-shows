@@ -20,12 +20,7 @@ $(document).ready(function() {
         }
     ];
 
-    for (let i = 0; i < tvShowsList.length; i++) {
-        let show = tvShowsList[i];
-        console.log(show.name + ` (rating: ${show.rating}) ${show.rating > 7 ? " -Wow, that's a great show!": ''}`);
-    }
-
-    tvShowsList.map(({name,rating,genres}) => {
+    tvShowsList.forEach(({name,rating,genres}) => {
         let html = `
             <div class="show">
                 <h2>${name}</h2>
