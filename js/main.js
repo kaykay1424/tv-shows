@@ -46,52 +46,67 @@ $(document).ready(function() {
             }            
         }
 
+        function addListItem({name,genres,rating}) {
+            let list = document.querySelector('#tv-shows-list');
+            let listItem = document.createElement('li');
+            let button = document.createElement('button');
+            let detailsDiv = document.createElement('div');
+            let detailsHtml = `
+                <h2>${name}</h2>
+                <p><b>Rating:</b> ${rating}
+            `;
+        
+            if (rating > 7) {
+                detailsHtml += " -Wow, that's a great show!";
+            }
+                
+            detailsHtml += `</p>
+                <p><b>Genres:</b> </p>
+                <ul>
+            `;
+
+            for (let i = 0; i < genres.length; i++) {
+                detailsHtml += `<li>${genres[i]}</li>`;
+            }
+
+            detailsHtml += `
+                </ul>
+            `;
+            button.classList.add('btn');
+            button.addEventListener('click', function(event) {
+                showDetails(event);
+            });
+            button.innerText = name;
+            detailsDiv.classList.add('details');
+            detailsDiv.innerHTML = detailsHtml;
+            listItem.classList.add('show');
+            listItem.appendChild(button);
+            listItem.appendChild(detailsDiv)
+            list.appendChild(listItem);
+        }
+
         function getAll() {
             return tvShowsList;
+        }
+
+        function showDetails(event) {
+            let clickedButton = event.target;
+            clickedButton.nextElementSibling.classList.toggle('visible');
+            clickedButton.classList.toggle('clicked');
+            clickedButton.blur();
         }
         
         return {
             add,
+            addListItem,
             filter,
             getAll
         };
     })();
-
-    app.add({
-        name: 'American Idol',
-        genres: ['Music'],
-        rating: 6.8
-    })
  
     function displayShows(shows) {
-        $('#tv-shows').html('').hide();
-        shows.forEach(({name,rating,genres}) => {
-            let html = `
-                <div class="show">
-                    <h2>${name}</h2>
-                    <p><b>Rating:</b> ${rating}
-            `;
-        
-            if (rating > 7) {
-                html += " -Wow, that's a great show!";
-            }
-                
-            html += `</p>
-                    <p><b>Genres:</b> </p>
-                    <ul>
-            `;
-
-            for (let i = 0; i < genres.length; i++) {
-                html += `<li>${genres[i]}</li>`;
-            }
-
-            html += `
-                    </ul>
-                </div>
-                <hr>
-            `;
-            $('#tv-shows').append(html).fadeIn();
-        });
+        $('#tv-shows-list').html('');
+        shows.forEach((show) => app.addListItem(show));
     }
 
     displayShows(app.getAll());

@@ -17,8 +17,72 @@ h1 {
 h1 img {
     vertical-align: middle;
 }
+* {
+    box-sizing: border-box;
+}
+.btn {
+    border-radius: 5px;
+    padding: 5px;
+}
 
+/* Search Form */
+#search-form {
+    margin: auto;
+    width: 50%;
+}
+#search-form input {
+    margin-bottom: 1em;
+    margin-right: 1em;
+}
+#search-form .btn {
+    display: inline-block;
+    margin-bottom: 1em;
+    margin-right: 1em;
+}
+ 
 /* Shows */
+#tv-shows-list {
+    /* display: grid;
+    grid-template-columns: repeat(3,1fr);
+    grid-gap: 1em; */
+    /* justify-content: space-around; */
+    margin-left: auto;
+    margin-right: auto;
+    width: 50%;
+}
+#tv-shows-list {
+    list-style-type: none;
+    padding-left: 0;
+}
+#tv-shows-list li {
+    background-color: #eeeeee;
+    display: block;
+    margin-bottom: 1em;
+    /* margin-left: 1%;
+    width: 30%; */
+}
+#tv-shows-list .btn {
+    background-color: #eeeeee;
+    border: 2px solid var(--primary-color);
+    color: var(--primary-color);
+    cursor: pointer;
+    font-weight: bold;
+    height: 80px;
+    padding: 15px;
+    position: relative;
+    text-align: left;
+    width: 100%;
+}
+#tv-shows-list .btn:not(.clicked):hover {
+    box-shadow: 2px 2px 2px var(--primary-color);
+}
+.details {
+    display: none;
+    padding: 8px;
+}
+.details.visible {
+    display: block;
+}
 .show h2 {
     color: var(--secondary-color);
     font-style: italic;
@@ -29,4 +93,18 @@ hr {
 }
 hr:last-child {
     border: none;
+}
+
+/* Media Queries */
+
+@media only screen and (max-width: 500px) {
+    #search-form .btn {
+        display: block;
+    }
+}
+@media only screen and (max-width: 800px) {
+    #search-form, 
+    #tv-shows-list {
+        width: 100%;
+    }
 }
