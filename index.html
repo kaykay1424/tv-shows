@@ -12,18 +12,22 @@
         <link href="css/main.css" rel="stylesheet">
         <!-- JS --> 
         <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>   
+        <script src="js/polyfill.min.js"></script>
+        <script src="js/fetch.umd.js"></script>
         <script src="js/main.js"></script>
     </head>
     <body>
-        <h1>TV Shows <img src="logo.png" alt="TV logo" height="30" width="30" /></h1>
-        <form id="search-form">
-            <label for="search"></label>
-            <input id="search" type="text" placeholder="Search by name" required />
-            <button class="btn" type="submit">Search</button>
-            <button id="clear-search" class="btn" type="button">Clear Search</button>
-        </form>        
-        <div id="tv-shows">
-            <ul id="tv-shows-list"></ul>
-        </div>
+        <div class="container">
+            <h1>TV Shows <img src="logo.png" alt="TV logo" height="30" width="30" /></h1>
+            <form id="search-form">
+                <label for="search"></label>
+                <input id="search" type="text" placeholder="Search by name" required />
+                <button class="btn" type="submit">Search</button>
+                <button id="clear-search" class="btn" type="button">Clear Search</button>
+            </form>        
+            <div id="tv-shows">
+                <ul id="tv-shows-list"></ul>
+            </div>
+        </div>        
     </body>
 </html>

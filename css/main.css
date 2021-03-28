@@ -24,6 +24,22 @@ h1 img {
     border-radius: 5px;
     padding: 5px;
 }
+.close {
+    color: rgb(190, 9, 9);
+    cursor: pointer;
+    right: 0;
+    position: absolute;
+}
+.hidden {
+    display: none;
+}
+.loading-message {
+    /* display: none; */
+    text-align: center;
+}
+.visible {
+    display: block;
+}
 
 /* Search Form */
 #search-form {
@@ -35,6 +51,7 @@ h1 img {
     margin-right: 1em;
 }
 #search-form .btn {
+    cursor: pointer;
     display: inline-block;
     margin-bottom: 1em;
     margin-right: 1em;
@@ -77,26 +94,31 @@ h1 img {
     box-shadow: 2px 2px 2px var(--primary-color);
 }
 .details {
-    display: none;
+    background-color: #eeeeee;
+    border-radius: 5px;
+    box-shadow: 2px 2px 5px;
+    left: 25%;
     padding: 8px;
+    position: fixed;
+    top: 10vh;
+    width: 50%;
 }
-.details.visible {
-    display: block;
+.details__container {
+    display: flex;
+    flex-wrap: wrap;
+    position: relative;
 }
-.show h2 {
+.details div {
+    margin: 1em;
+}
+.details h2 {
     color: var(--secondary-color);
     font-style: italic;
     font-family: 'Anton',serif;
-}
-hr {
-    border-bottom: 2px solid var(--secondary-color); 
-}
-hr:last-child {
-    border: none;
+    margin-top: 0;
 }
 
 /* Media Queries */
-
 @media only screen and (max-width: 500px) {
     #search-form .btn {
         display: block;
@@ -104,7 +126,11 @@ hr:last-child {
 }
 @media only screen and (max-width: 800px) {
     #search-form, 
-    #tv-shows-list {
+    #tv-shows-list,
+    .details {
         width: 100%;
+    }
+    .details {
+        left: 0;
     }
 }
