@@ -20,10 +20,18 @@
         <div class="container">
             <h1>TV Shows <img src="logo.png" alt="TV logo" height="30" width="30" /></h1>
             <form id="search-form">
-                <label for="search"></label>
-                <input id="search" type="text" placeholder="Search by name" required />
-                <button class="btn" type="submit">Search</button>
-                <button id="clear-search" class="btn" type="button">Clear Search</button>
+                <div class="form-container">
+                    <input id="search" type="text" aria-label="Search" placeholder="Search by name" style="position:relative;" required />
+                    <span>&#128270; <!-- search icon --> </span>
+                </div>                
+                <select id="sort-search" aria-label="Sort Search">
+                    <option value=''>Sort by</option>
+                    <option value="language">Language</option>
+                    <option value="country">Country</option>
+                    <option value="premiered">Date Premiered</option>
+                    <option value="rating">Rating</option>
+                    <option value="network">Network</option>
+                </select>                
             </form>        
             <div id="tv-shows">
                 <ul id="tv-shows-list"></ul>

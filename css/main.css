@@ -5,6 +5,9 @@
 }
 
 /* General */
+body,html {
+    margin: 0;
+}
 body {
     font-family: 'Lora', serif;
 }
@@ -30,6 +33,9 @@ h1 img {
     right: 0;
     position: absolute;
 }
+.container {
+    padding: 1em;
+}
 .hidden {
     display: none;
 }
@@ -37,24 +43,69 @@ h1 img {
     /* display: none; */
     text-align: center;
 }
+.load-more {
+    border: 1px solid var(--primary-color);
+    cursor: pointer;
+    display: block;
+    margin: auto;
+}
+.load-more:hover {
+    background-color: var(--primary-color);
+    color: white;
+}
+.tabs {
+    display: flex;
+    list-style: none;
+    margin-bottom: 0;
+    padding-left: 0;
+}
+.tabs-item {
+    border-bottom: 1px solid #000;
+    cursor: pointer;
+    padding: .5em;
+}
+.tabs-item.active {
+    border: 1px solid #000;
+    border-top-left-radius: 5px;
+    border-top-right-radius: 5px;
+    border-bottom: 0;
+}
 .visible {
     display: block;
 }
 
 /* Search Form */
 #search-form {
-    margin: auto;
+    margin: 1em auto;
     width: 50%;
 }
 #search-form input {
-    margin-bottom: 1em;
-    margin-right: 1em;
+    border: 0;
+    height: 100%;
+    max-width: 100%;
+    width: 90%;
+}
+#search-form input:focus {
+    outline: 0;
+}
+#search-form select {
+    height: 25px;
+}
+#search-form .form-container {
+    align-items: center;
+    border: 1px solid lightgray;
+    display: inline-flex;
+    height: 25px;
+    justify-content: space-between;
+    max-width: 100%;
+    width: 160px;
 }
 #search-form .btn {
     cursor: pointer;
     display: inline-block;
     margin-bottom: 1em;
     margin-right: 1em;
+    width: auto;
 }
  
 /* Shows */
@@ -93,29 +144,35 @@ h1 img {
 #tv-shows-list .btn:not(.clicked):hover {
     box-shadow: 2px 2px 2px var(--primary-color);
 }
-.details {
+.info {
     background-color: #eeeeee;
     border-radius: 5px;
     box-shadow: 2px 2px 5px;
-    left: 25%;
+    left: 20%;
     padding: 8px;
     position: fixed;
     top: 10vh;
-    width: 50%;
+    width: 60%;
 }
-.details__container {
+.info__container {
     display: flex;
     flex-wrap: wrap;
     position: relative;
 }
-.details div {
-    margin: 1em;
+.info__container > div:nth-of-type(2) {
+    width: 68%;
 }
-.details h2 {
+.info__container > div {
+    margin: 1%;
+}
+.info h2 {
     color: var(--secondary-color);
     font-style: italic;
     font-family: 'Anton',serif;
     margin-top: 0;
+}
+.info [data-content]:not(.visible) {
+    display: none;
 }
 
 /* Media Queries */
@@ -126,11 +183,14 @@ h1 img {
 }
 @media only screen and (max-width: 800px) {
     #search-form, 
-    #tv-shows-list,
-    .details {
+    #tv-shows-list {
         width: 100%;
     }
-    .details {
-        left: 0;
+    .info {
+        left: 2%;
+        width: 96%; 
+    }
+    .info__container > div:nth-of-type(2) {
+        width: 100%;
     }
 }
