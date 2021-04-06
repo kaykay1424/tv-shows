@@ -1,0 +1,14 @@
+{
+    "ignorePatterns": ["stylelint.config.js"],
+    "env": {
+      "es6": true,
+      "jquery": true,
+      "browser": true
+    },
+    "extends": [
+      "eslint:recommended"
+    ],
+    "rules": {
+      "quotes": ["error", "single",{ "allowTemplateLiterals": true }]
+    }
+}
