@@ -1,33 +1,68 @@
 $(document).ready(function() {
     let tvShowsApp = (function() {
+        // Variables
         let tvShowsList = [];
         let filteredTVShowsList = [];
-        let tvShowProps = ['name','genres','rating','image,network,schedule,language,country'];
+        let tvShowProps = ['id','name','genres','rating','image','network','schedule','language','country','status'];
         let apiURL = 'https://api.tvmaze.com/shows';
         let apiSearchURL = 'https://api.tvmaze.com/search/shows?q=';
         let currentPage = 0;
         let search = null;
         let sortFactor = null;
+        let debounceTimer;
+
+        // Helper Functions
+        function debounce(func,timeout=500) {
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(function() {
+                func();
+            },timeout);
+        }
+
+        function getAge(birthdate) {            
+            let currentDate = new Date();
+            let age = currentDate.getFullYear() - birthdate.getFullYear();
+            // Subtract 1 from age if person's birthday hasn't occurred this year yet
+            if (birthdate.getMonth() > currentDate.getMonth()) { // if person's birthday is after current month
+                age -= 1;
+            } else if (birthdate.getMonth() === currentDate.getMonth()) {                                 
+                if (birthdate.getDay() < currentDate.getDay()) { // if person's birthday is in the current month but is before the current day
+                    age -= 1;
+                }
+            }
+            return age;
+        }
 
         function sortShows(factor) {
             let shows = search ? filteredTVShowsList : tvShowsList;
             shows = JSON.parse(JSON.stringify(shows)); // make copy to not alter original array
             shows.sort((a,b) => {
+                // String sorting
+                if (factor === 'country' || factor === 'language') {
+                    // check which properties (if any) are null
+                    if (a[factor] && b[factor]) { 
+                        let prop1 = a[factor].toLowerCase();
+                        let prop2 = b[factor].toLowerCase();
+                        if (prop1 > prop2 ) return 1;
+                        if (prop1 === prop2) return 0;
+                        if (prop1 < prop2) return -1;
+                    } else if (!a[factor] && !b[factor]) {
+                        return 0;
+                    } else if (!a[factor] && b[factor]) {
+                        return -1;
+                    } else {
+                        return 1;
+                    }
+                }
                 return a[factor] - b[factor];
             });
             return shows;
         }
 
-        function debounce(func,timer,timeout) {
-            clearTimeout(timer);
-            timer = setTimeout(function() {
-                func();
-            },timeout); 
-        }
-
+        // Functions to add content/data
         function add(show,filtered) {
             let isDataValid = true;
-
+            // Check if show is an object and contains all necessary properties
             if (typeof show === 'object') {
                 for (let i = 0; i < tvShowProps.length; i++) {
                     if (Object.keys(show).indexOf(tvShowProps[i]) < 0) {
@@ -36,7 +71,7 @@ $(document).ready(function() {
                     }
                 }               
             } 
-
+            // If show object is valid, add it to appropriate array based on 'filtered' parameter (will be either true or false)
             if (isDataValid) {
                 if (filtered) {                    
                     filteredTVShowsList.push(show);
@@ -46,42 +81,29 @@ $(document).ready(function() {
             }            
         }
 
-        function addLoadMoreButton() {
-            let tvShowsDiv = document.getElementById('tv-shows');
-            let loadMoreButton = document.querySelector('.load-more.btn');
-            
-            if (loadMoreButton) {
-                tvShowsDiv.removeChild(loadMoreButton);
-            }
+        function addListItem(show) {            
+            let listItem = $(`<li class="show list-group-item list-group-item-action"></li>`);
+            $(`<button class="btn btn-block text-left" data-target="#info-modal" data-toggle="modal">${show.name}</button>`).appendTo(listItem).on('click',() => {
+                showInfo(show); // open modal and display TV show details
+            });
+            $('#tv-shows-list').append(listItem);
+        }
 
-            if (search && search.length === 0 || !search) { // only add Load More button when results from all shows (not searched shows) are being shown
-                console.log(search)
+        function addLoadMoreButton() {
+            if ($('.load-more.btn').length > 0) $('.load-more.btn').remove(); // remove any Load More buttons
+            // Only add Load More button when all shows (not searched shows) are being shown
+            if (search && search.length === 0 || !search) { 
                 $.get(`${apiURL}?page=${currentPage+1}`, (data,status) => {
                     if (status !== 'error') {
-                        loadMoreButton = document.createElement('button');
-                        loadMoreButton.innerText = 'Load More Shows';
-                        loadMoreButton.classList.add('btn','load-more');
-                        tvShowsDiv.appendChild(loadMoreButton);
+                        $('#tv-shows').append("<button class='btn load-more'>Load More Shows</button>");
                     }
                 });
             }
         }
 
-        function addListItem(show) {            
-            let list = document.querySelector('#tv-shows-list');
-            let listItem = document.createElement('li');
-            let button = document.createElement('button');            
-            button.classList.add('btn');
-            button.addEventListener('click', function() {
-                showInfo(show);
-            });
-            button.innerText = show.name;            
-            listItem.classList.add('show');
-            listItem.appendChild(button);
-            list.appendChild(listItem);
-        }
-
+        // Functions to get variables
         function getAll(filtered) {
+            // 'filtered' parameter will be true or false
            if (filtered) {
             return filteredTVShowsList;
            } 
@@ -93,6 +115,11 @@ $(document).ready(function() {
             return currentPage;
         }
 
+        function getSortFactor() {
+            return sortFactor;
+        }
+
+        // Functions to set variables
         function setPage(page) {
             currentPage = page;
         }
@@ -101,48 +128,25 @@ $(document).ready(function() {
             search = term;
         }
 
-        function getSortFactor() {
-            return sortFactor;
-        }
-
         function setSortFactor(factor) {
             sortFactor = factor;
         }
 
-        function displayShows(shows) {
-            if (shows.length > 0) {
-                $('#tv-shows-list').html('');
-                let sortFactor = tvShowsApp.getSortFactor();
-                if (sortFactor) {
-                    shows = tvShowsApp.sortShows(sortFactor);
-                }
-                shows.forEach((show) => tvShowsApp.addListItem(show));  
-                addLoadMoreButton(); 
-            } else {
-                $('#tv-shows-list').html('<p>No shows found.</p>');
-            }     
-        }
-
+        // Functions to retrieve data from API
         function loadList() {
-            let url = search && search !== '' ? apiSearchURL+search : `${apiURL}?page=${currentPage}`; 
-            let location = currentPage === 0 && !search || search && search.length === 0 ? 'before' : 'after';
+            let url = search && search !== '' ? apiSearchURL+search : `${apiURL}?page=${currentPage}`; // if a search for a show has been made use apiSearchURL, otherwise use apiURL to get current page of results
+            let location = currentPage === 0 && !search || search && search.length === 0 ? 'before' : 'after'; // Show the loading message at the bottom of the page if there is no search for a show and show it at the top of the page if results only include 1st page of results and no show has been searched
             showLoadingMessage(location);
                         
-            return fetch(url).then(function(response) {
-                return response.json();
-            }).then(function(results) {
+            return $.ajax(url).then(function(results) {
                 filteredTVShowsList = [];
-                results.forEach((result) => {
-                    console.log(result)
-                    if (!result.image) {
-                        console.log(result)
-                    }
-                    
-                    if (!result.name) { // if url is search url, show properties from results are 1 level deeper in array
+                results.forEach((result) => {                    
+                    if (!result.name) { // if url is search url, show's properties from results are 1 level deeper in array
                         result = result.show;
                     }
 
                     let show = {
+                        id: result.id,
                         name: result.name,
                         country: result.network ? result.network.country.name : null,
                         genres: result.genres,
@@ -152,128 +156,209 @@ $(document).ready(function() {
                         schedule: result.schedule,
                         network: result.network ? result.network.name: null,
                         summary: result.summary,
+                        status: result.status,
                         image: result.image ? result.image.medium : null
                     }
                     
-                    search ? add(show,true) : add(show);  
+                    search ? add(show,true) : add(show);  // add the show to tvShowsList array if a search has not been made and add show to filteredTVShowsList array if a search has been made
                 });
-                hideLoadingMessage();
+                removeLoadingMessage();
             }).catch(function(error) {
-                console.log(error)
-                hideLoadingMessage();
+                removeLoadingMessage();
             });
         }
 
-        function hideLoadingMessage() {
-            let loadingMessageDiv = document.querySelector('.loading-message');
-            let tvShowsDiv = document.getElementById('tv-shows');
-            tvShowsDiv.removeChild(loadingMessageDiv);
-        }
-
-        function showLoadingMessage(location) {
-            let loadingMessageDiv = document.querySelector('.loading-message');
-            
-            if (loadingMessageDiv) {
-                document.body.removeChild(loadingMessageDiv);
-            }
-
-            loadingMessageDiv = document.createElement('div');
-            loadingMessageDiv.innerHTML = 'Loading &#8230;'
-            loadingMessageDiv.classList.add('loading-message');
-            let tvShowsDiv = document.getElementById('tv-shows');
-            let tvShowsList = document.getElementById('tv-shows-list');
-            
-            if (location === 'before') {
-                tvShowsDiv.insertBefore(loadingMessageDiv,tvShowsList);
+        // Functions to show content
+        function displayShows(shows) {
+            // if there are shows to display
+            if (shows.length > 0) {
+                $('#tv-shows-list').html('');
+                let sortFactor = tvShowsApp.getSortFactor();
+                // if a sorting factor has been selected, sort TV shows
+                if (sortFactor) {
+                    shows = tvShowsApp.sortShows(sortFactor); 
+                }
+                
+                shows.forEach((show) => tvShowsApp.addListItem(show)); // add each show to the TV shows list              
+                addLoadMoreButton(); 
             } else {
-                tvShowsDiv.appendChild(loadingMessageDiv);
-            }
+                $('#tv-shows-list').html('<p>No shows found.</p>');
+            }     
         }
 
-        function hideInfo() {
-            let infoDiv = document.querySelector('.info');
-            let containerDiv = document.querySelector('.container');
-            document.body.removeChild(infoDiv);
-            containerDiv.style.opacity = 1;
-        }
+        function showExtraInfo(id,type) {
+            $.ajax(`${apiURL}/${id}/${type}`).then(function(results) {
+                let carouselIndicators = ``;
+                let carouselItems = ``;
+                let carouselID = 'carousel-'+type;
+                
+                results.forEach((info,i) => {
+                    let isActive = i === 0 ? 'active': '';
+                    carouselIndicators += `<li data-target="${'#'+carouselID}" data-slide-to="${i}" class="${isActive}">${i+1}</li>`;
+                    
+                    switch(type) {
+                        case 'seasons':
+                            carouselItems += 
+                            `
+                                <div class="carousel-item ${isActive}">
+                                    <div class="carousel-item-header">
+                                        <h5>Season ${info.number} (${info.premiereDate.replace(/-/g,'/')} - ${info.endDate.replace(/-/g,'/')})</h5>
+                                        <p><b># of Episodes:</b> ${info.episodeOrder}</p>                            
+                                    </div>
+                                    ${info.image ? `<img src="${info.image.medium}" class="img-fluid ${info.summary ? 'float-left': 'mx-auto'}" alt="image of season ${info.number}">`: ''}                            
+                                    ${info.summary ? info.summary: ''}
+                                </div>
+                            `;
+                            break;
+                        case 'episodes':
+                            carouselItems += 
+                            `
+                                <div class="carousel-item ${isActive}">
+                                    <div class="carousel-item-header">
+                                        <h5>${info.name} </h5>
+                                        <p><b>Episode #${info.number}</b> (Season ${info.season})</p>
+                                    </div>
+                                    ${info.image ? `<img src="${info.image.medium}" class="img-fluid ${info.summary ? 'float-left': 'mx-auto'}" alt="image of episode ${info.number}">`: ''}                            
+                                    ${info.summary ? info.summary: ''}
+                                </div>
+                            `;
+                            break;
+                        case 'cast':
+                            
+                            let castAge = getAge(new Date(info.person.birthday));                            
+                            let castLife = info.person.deathday ? `<p><b>Lived:</b>${new Date(info.person.birthday).getFullYear()}-${new Date().getFullYear}`: `<p><b>Age:</b> ${castAge}`;
+                            let castDataContent = info.person.country? `<p><b>Country:</b> ${info.person.country.name} </p>`: '';
+                            castDataContent += castLife;
+                            carouselItems += 
+                            `
+                                <div class="carousel-item ${isActive}">
+                                    <div class="carousel-item-header">
+                                        <h5 data-toggle="popover" data-content="${castDataContent}">${info.person.name} (Actor) </h5>
+                                        <img src="${info.person.image.medium}" class="img-fluid mx-auto" alt="image of ${info.person.name}">
+                                    </div>
+                                    ${info.character.image ? `
+                                        <div>
+                                            <h5>${info.character.name} (Character)</h5><img src=${info.character.image.medium} class='img-fluid mx-auto' alt='image of ${info.character.name}"'>
+                                        </div>`
+                                        : ''
+                                    }
+                                </div>
+                            `;
+                            break;
+                        case 'crew':
+                            let crewAge = getAge(new Date(info.person.birthday));
+                            let crewLife = info.person.deathday ? `<p><b>Lived:</b>${new Date(info.person.birthday).getFullYear()}-${new Date().getFullYear}`: `<p><b>Age:</b> ${crewAge}`;
+                            let crewDataContent = info.person.country? `<p><b>Country:</b> ${info.person.country.name} </p>`: '' 
+                            crewDataContent += crewLife;
+                            
+                            carouselItems += 
+                                `
+                                    <div class="carousel-item ${isActive}">
+                                        <div class="carousel-item-header">
+                                            <h5 data-toggle="popover" data-content="${crewDataContent}">${info.person.name} (${info.type})</h5>                                            
+                                        </div>
+                                        ${info.person.image ? `<img src="${info.person.image.medium}" class="img-fluid mx-auto" alt="image of${info.person.name}">`: ''}
+                                    </div>
+                                `;
+                            break;
+                    }         
+                });
 
-        function showInfo({name,genres,rating,image,summary,language,country,premiered,schedule,network}) {
-            let infoDiv = document.querySelector('.info');
-            let containerDiv = document.querySelector('.container');
-
-            if (infoDiv) {
-                document.body.removeChild(infoDiv);
-            }
-
-            infoDiv = document.createElement('div');
-            let infoHtml = `
-                <div class="info__container">
-                    <span class="close">&#10008;</span>
-            `;
-
-            if (image) {
-                infoHtml += `
-                    <div>
-                        <img src="${image}" alt="image of ${name}" />
+                let carousel = `
+                    <div id="${carouselID}" class="carousel slide" data-interval="false">                        
+                        <div class="carousel-inner">${carouselItems}</div>   
+                        <div class="carousel-controls">                     
+                            <a class="carousel-control-prev" href="${'#'+carouselID}" role="button" data-slide="prev">
+                                <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                                <span class="sr-only">Previous</span>
+                            </a>
+                            <a class="carousel-control-next" href="${'#'+carouselID}" role="button" data-slide="next">
+                                <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                                <span class="sr-only">Next</span>
+                            </a>
+                            <div class="carousel-indicators-container">
+                                <ol class="carousel-indicators">${carouselIndicators}</ol>
+                            </div>                            
+                        </div>
                     </div>
                 `;
-            }
-                    
-            infoHtml+= `
-            <div>
-                <h2>${name}</h2>
-                <ul class="tabs">
-                    <li class="tabs-item active" data-item="summary">Summary</li> 
-                    <li class="tabs-item" data-item="details">Details</li>
-                </ul>
-                    <div class="visible" data-content="summary">${summary}</div>    
-                    <div data-content="details">
-                        <p><b>Country:</b> ${country ? country : 'N/A'} </p>    
-                        <p><b>Language:</b> ${language} </p> 
-                        <p><b>Premiered:</b> ${premiered} </p>    
-                        <p><b>Network:</b> ${network} </p>     
-                        <p><b>Schedule:</b> ${schedule.days.join(', ')} ${schedule.time ? "at " + schedule.time : ''}        
-                        <p><b>Rating:</b> ${rating ? rating : 'N/A'}
+                $('body').popover({
+                    container: 'body',
+                    html: true,
+                    placement: 'top',
+                    selector: '[data-toggle="popover"]',
+                    trigger: 'click hover'
+                }); // use popover for more details about crew/cast members (shows when hovering/clicking on member's name)
+                $('#'+type).html(carousel); // add carousel to tab content that corresponds to the type argument passed into function
+            }).catch(function() {
+                $('#'+type).html('An error has occurred.');
+            });
+        }
+
+        function showInfo({id,name,genres,rating,image,summary,language,country,premiered,schedule,network,status}) {  
+            // Remove current TV show image (if exists) before adding new image (if exists)
+            if ($('.modal-body .img-container img').length > 0) $('.modal-body .img-container img').remove();
+            if (image) $('.modal-body .img-container').html(`<img src="${image}" class="img-fluid mx-auto" alt="image of ${name}" />`);
+            // Focus content on the first tab (summary)
+            $('.nav-link, .tab-pane').removeClass('active show');
+            $('#summary-tab, #summary').addClass('active');
+            $('#summary').addClass('show');
+            let sortingFactor = getSortFactor();
+            let detailsHTML = 
+            `                    
+                <p><span class="country ${sortingFactor === 'country' ? 'highlighted': ''}">Country:</span> ${country ? country : 'N/A'} </p>    
+                <p><span class="language ${sortingFactor === 'language' ? 'highlighted': ''}">Language:</span> ${language} </p> 
+                <p><span class="premiered ${sortingFactor === 'premiered' ? 'highlighted': ''}">Premiered:</span> ${premiered} </p> 
+                <p><span class="status ${sortingFactor === 'status' ? 'highlighted': ''}">Status:</span> ${status ? status: 'N/A'}</p>   
+                <p><span class="network ${sortingFactor === 'network' ? 'highlighted': ''}">Network:</span> ${network ? network : 'N/A'} </p>     
+                <p><span class="schedule">Schedule:</span> ${schedule.days.join(', ')} ${schedule.time ? "at " + schedule.time : ''}        
+                <p><span class="rating ${sortingFactor === 'rating' ? 'highlighted': ''}">Rating:</span> ${rating ? rating : 'N/A'}</p>
+                <p><span class="genres">Genres:</span>
             `;
-                
-            infoHtml += `</p>
-                <p><b>Genres:</b>
-            `;
-            
+    
             if (genres.length === 0) {
-                infoHtml += `N/A</p>`;
+                detailsHTML += 'N/A</p>';
             } else {
                 let genresArr = [];
                 for (let i = 0; i < genres.length; i++) {
                     genresArr.push(genres[i])
                 }
-                infoHtml += genresArr.join(', ');
-                infoHtml += `</p>`; 
+                detailsHTML += genresArr.join(', ');
+                detailsHTML += '</p>'; 
             }
+            
+            $('.modal-title').html('').append(name);
+            $('#details').html('').append(detailsHTML);
+            $('#summary').html('').append(summary);
 
-            infoHtml += `
-                        </div>                  
-                    </div>                    
+            $('.nav-link').click(function() {
+                let targetTabPaneID = $(this).attr('href');
+                let targetTabPaneName = targetTabPaneID.replace('#',''); // get name of tab pane that corresponds to tab link clicked
+                // Make an API request to get content that matches the tab clicked and display it in a carousel  
+                if (targetTabPaneName === 'seasons') showExtraInfo(id, 'seasons');
+                if (targetTabPaneName === 'episodes') showExtraInfo(id, 'episodes');
+                if (targetTabPaneName === 'cast') showExtraInfo(id, 'cast');
+                if (targetTabPaneName === 'crew') showExtraInfo(id, 'crew');
+            });
+        }
+
+        function showLoadingMessage(location) {
+            // 'location' parameter will be either 'before' or 'after'
+            if ($('.loading-message-container').length > 0) $('.loading-message-container').remove();
+            loadingMessageDiv = $(
+                `
+                <div class="loading-message-container">
+                    <div class="spinner-border" role="status"></div> 
+                    <span>Loading&#8230;</span>
                 </div>
-            `;
-            infoDiv.classList.add('info');
-            infoDiv.innerHTML = infoHtml;
-            document.body.appendChild(infoDiv);
-            infoDiv.querySelector('.close').addEventListener('click', hideInfo);
-            containerDiv.addEventListener('click', function(e) {
-                console.log(e.target.parentElement.classList);
-                if (!e.target.classList.contains('show') && !e.target.parentElement.classList.contains('show')) {
-                    hideInfo();
-                }
-            });
+                `
+            );
+            location === 'before' ? $('#tv-shows').prepend(loadingMessageDiv): $('#tv-shows').append(loadingMessageDiv);            
+        }
 
-            window.addEventListener('keydown', function(e) {
-                if (e.key === 'Escape' && document.querySelector('.info')) {
-                    hideInfo();
-                }
-            });
-
-            containerDiv.style.opacity = 0.5;
+        // Functions to remove content
+        function removeLoadingMessage() {
+            $('.loading-message-container').remove();
         }
 
         return {
@@ -293,34 +378,36 @@ $(document).ready(function() {
         };
     })();
 
+    // Make an API request to get TV shows and display them
     tvShowsApp.loadList().then(function() {
         tvShowsApp.displayShows(tvShowsApp.getAll(false));
     });
     
     $('#search').keyup(() => {
         let search = $('#search').val();
-        let timer;
-        
+        tvShowsApp.setSearch(search.length > 0 ? search : null);
+
+        // Delay making an API request to search for a show until user has stopped typing for .5s
         tvShowsApp.debounce(
-            () => {                
+            () => {           
+                // If search is empty, do not make an API request and show all TV shows from tvShowsList array  
                 if (search.length === 0) {
-                    console.log('empty search')
-                    tvShowsApp.setSearch(null);
                     tvShowsApp.displayShows(tvShowsApp.getAll(false));
                     return;
                 }
-                tvShowsApp.setSearch(search);
+                // If search isn't empty make an API request with the search term and display the results
                 tvShowsApp.loadList().then(function() {
                     tvShowsApp.displayShows(tvShowsApp.getAll(true));                           
-                });
+                });            
             }
-        ,timer,500);
+        ,500);
     });
 
     $('#sort-search').change(function() {
         let factor = $(this).val() === '' ? null : $(this).val();
         tvShowsApp.setSortFactor(factor);
-        let filteredTVShows = tvShowsApp.getAll(true).length; 
+        let filteredTVShows = tvShowsApp.getAll(true); 
+        // If a search has been made, sort those resulting shows, otherwise sort the regular list of TV shows
         if (filteredTVShows.length > 0) {
             tvShowsApp.displayShows(filteredTVShows);
         } else {
@@ -330,17 +417,10 @@ $(document).ready(function() {
     
     $(document).on('click','.load-more.btn',function() {
         $(this).remove();
-        tvShowsApp.setPage(tvShowsApp.getPage() +1);
+        // Make an API Request to get the next page of TV shows and display them
+        tvShowsApp.setPage(tvShowsApp.getPage() + 1);
         tvShowsApp.loadList().then(function() {
             tvShowsApp.displayShows(tvShowsApp.getAll(false));
         });
     });
-
-    $(document).on('click', '.tabs-item', function() {
-        $('.tabs-item').removeClass('active');
-        $('[data-content]').removeClass('visible');
-        $(this).addClass('active');
-        let item = $(this).data('item');
-        $(`[data-content="${item}"]`).addClass('visible');
-    });   
 });

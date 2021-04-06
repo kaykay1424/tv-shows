@@ -2,6 +2,7 @@
 :root {
     --primary-color: rgb(2, 100, 2);
     --secondary-color: rgb(90, 114, 81);
+    --light-gray-color: #eeeeee;
 }
 
 /* General */
@@ -18,7 +19,12 @@ h1 {
     text-shadow: 1px 1px 1px #000;
 }
 h1 img {
+    height: 30px;
     vertical-align: middle;
+    width: 30px; 
+}
+img.mx-auto {
+    display: block;
 }
 * {
     box-sizing: border-box;
@@ -33,19 +39,15 @@ h1 img {
     right: 0;
     position: absolute;
 }
-.container {
-    padding: 1em;
+.float-left {
+    margin-right: 1em;
 }
-.hidden {
-    display: none;
+.highlighted {
+    background-color: rgb(119, 255, 119);
 }
-.loading-message {
-    /* display: none; */
-    text-align: center;
-}
+/* -Load Buttons */
 .load-more {
     border: 1px solid var(--primary-color);
-    cursor: pointer;
     display: block;
     margin: auto;
 }
@@ -53,144 +55,152 @@ h1 img {
     background-color: var(--primary-color);
     color: white;
 }
-.tabs {
-    display: flex;
-    list-style: none;
+.loading-message-container {
+    margin: 0 auto 0.5em auto;
+    width: 25%;
+}
+.spinner-border {
+    height: 1rem;
+    width: 1rem;
+}
+/* Components */
+/* -Carousel */
+.carousel-controls {
+    background-color: #000;
+    position: relative;
+}
+.carousel-indicators {
+    display: inline-flex;
     margin-bottom: 0;
-    padding-left: 0;
+    margin-left: 0;
+    margin-right: 0;
+    position: static;
 }
-.tabs-item {
-    border-bottom: 1px solid #000;
-    cursor: pointer;
-    padding: .5em;
+.carousel-indicators li {
+    background-color: transparent;
+    border: 0;
+    color: #fff;
+    height: auto;
+    padding: 5px;
+    text-indent: 0;
+    width: auto;
 }
-.tabs-item.active {
-    border: 1px solid #000;
-    border-top-left-radius: 5px;
-    border-top-right-radius: 5px;
-    border-bottom: 0;
+.carousel-indicators-container {    
+    margin: auto;
+    overflow-x: auto;
+    text-align: center;
+    width: 80%;
 }
-.visible {
-    display: block;
+/* -Nav Pills */
+.nav-pills .nav-link {
+    color: var(--primary-color);
+}
+.nav-pills .nav-link.active {
+    background-color: var(--primary-color);
+}
+.nav-pills .nav-link:not(.active):hover {
+    color: var(--secondary-color);
+}
+/* -Popover */
+.popover p {
+    margin: 0;
 }
 
 /* Search Form */
 #search-form {
-    margin: 1em auto;
-    width: 50%;
+    margin-bottom: 1em;
+    margin-top: 1em;
+}
+#search-form div[class*="col"]:first-child {
+    align-items: center;
+    border: 1px solid lightgray;
+    display: inline-flex;
+    justify-content: space-between;
 }
 #search-form input {
     border: 0;
     height: 100%;
-    max-width: 100%;
-    width: 90%;
 }
 #search-form input:focus {
     outline: 0;
 }
-#search-form select {
-    height: 25px;
-}
-#search-form .form-container {
-    align-items: center;
-    border: 1px solid lightgray;
-    display: inline-flex;
-    height: 25px;
-    justify-content: space-between;
-    max-width: 100%;
-    width: 160px;
-}
-#search-form .btn {
-    cursor: pointer;
-    display: inline-block;
-    margin-bottom: 1em;
-    margin-right: 1em;
-    width: auto;
-}
- 
+
 /* Shows */
-#tv-shows-list {
-    /* display: grid;
-    grid-template-columns: repeat(3,1fr);
-    grid-gap: 1em; */
-    /* justify-content: space-around; */
-    margin-left: auto;
-    margin-right: auto;
-    width: 50%;
-}
 #tv-shows-list {
     list-style-type: none;
     padding-left: 0;
 }
 #tv-shows-list li {
-    background-color: #eeeeee;
+    background-color: var(--light-gray-color);
     display: block;
     margin-bottom: 1em;
-    /* margin-left: 1%;
-    width: 30%; */
 }
 #tv-shows-list .btn {
-    background-color: #eeeeee;
-    border: 2px solid var(--primary-color);
     color: var(--primary-color);
-    cursor: pointer;
-    font-weight: bold;
-    height: 80px;
     padding: 15px;
-    position: relative;
-    text-align: left;
-    width: 100%;
 }
-#tv-shows-list .btn:not(.clicked):hover {
+#tv-shows-list .list-group-item {
+    background-color: var(--light-gray-color);
+    border-color: var(--primary-color);
+    border: 2px solid var(--primary-color);
+    border-radius: 10px;
+    padding: 0;
+}
+#tv-shows-list .list-group-item:not(.clicked):hover {
     box-shadow: 2px 2px 2px var(--primary-color);
 }
+
+/* TV Show Info Modal */
 .info {
-    background-color: #eeeeee;
-    border-radius: 5px;
-    box-shadow: 2px 2px 5px;
-    left: 20%;
-    padding: 8px;
-    position: fixed;
-    top: 10vh;
-    width: 60%;
+    background-color: var(--light-gray-color);
 }
-.info__container {
-    display: flex;
-    flex-wrap: wrap;
-    position: relative;
+.modal {
+    padding: 0;
 }
-.info__container > div:nth-of-type(2) {
-    width: 68%;
+.modal-body {
+    padding-left: 0;
+    padding-right: 0;
 }
-.info__container > div {
-    margin: 1%;
-}
-.info h2 {
-    color: var(--secondary-color);
+.modal-header {
+    color: var(--primary-color);
     font-style: italic;
     font-family: 'Anton',serif;
     margin-top: 0;
 }
-.info [data-content]:not(.visible) {
-    display: none;
+.modal-header .close {
+    right: 5px;
+    top: 0;
+}
+.modal .carousel-item p:last-of-type {
+    margin-bottom: 0;
+}
+/* -Carousel Item */
+#carousel-cast .carousel-item.active {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+#carousel-cast .carousel-item.active div {
+    margin: 1em;
+    margin-bottom: 0;
+}
+#carousel-cast .carousel-item .carousel-item-header h5,
+#carousel-crew .carousel-item .carousel-item-header h5 {
+    color: var(--secondary-color);
+    cursor: pointer;
+    text-decoration: underline;
+}
+#details span {
+    font-weight: 700;
 }
 
 /* Media Queries */
-@media only screen and (max-width: 500px) {
-    #search-form .btn {
-        display: block;
+/* .col-lg breakpoint */
+@media only screen and (max-width: 992px) {
+    .nav-pills {
+        border-bottom: 1px solid var(--primary-color);
+        margin-bottom: 1em;
     }
 }
-@media only screen and (max-width: 800px) {
-    #search-form, 
-    #tv-shows-list {
-        width: 100%;
-    }
-    .info {
-        left: 2%;
-        width: 96%; 
-    }
-    .info__container > div:nth-of-type(2) {
-        width: 100%;
-    }
-}
+
+
