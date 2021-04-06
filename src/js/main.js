@@ -60,7 +60,7 @@ $(document).ready(function() {
         }
 
         // Functions to add content/data
-        function add(show,filtered) {
+        function add(show,typeOfList) {
             let isDataValid = true;
             // Check if show is an object and contains all necessary properties
             if (typeof show === 'object') {
@@ -71,9 +71,9 @@ $(document).ready(function() {
                     }
                 }               
             } 
-            // If show object is valid, add it to appropriate array based on 'filtered' parameter (will be either true or false)
+            // If show object is valid, add it to appropriate array based on 'typeOfList' parameter (will be either 'all' or 'filtered')
             if (isDataValid) {
-                if (filtered) {                    
+                if (typeOfList === 'filtered') {                    
                     filteredTVShowsList.push(show);
                 } else {
                     tvShowsList.push(show);
@@ -95,16 +95,16 @@ $(document).ready(function() {
             if (search && search.length === 0 || !search) { 
                 $.get(`${apiURL}?page=${currentPage+1}`, (data,status) => {
                     if (status !== 'error') {
-                        $('#tv-shows').append("<button class='btn load-more'>Load More Shows</button>");
+                        $('#tv-shows').append('<button class="btn load-more">Load More Shows</button>');
                     }
                 });
             }
         }
 
         // Functions to get variables
-        function getAll(filtered) {
-            // 'filtered' parameter will be true or false
-           if (filtered) {
+        function getAll(typeOfList) {
+            // 'typeOfList' parameter will be 'all' or 'filtered'
+           if (typeOfList === 'filtered') {
             return filteredTVShowsList;
            } 
 
@@ -135,7 +135,7 @@ $(document).ready(function() {
         // Functions to retrieve data from API
         function loadList() {
             let url = search && search !== '' ? apiSearchURL+search : `${apiURL}?page=${currentPage}`; // if a search for a show has been made use apiSearchURL, otherwise use apiURL to get current page of results
-            let location = currentPage === 0 && !search || search && search.length === 0 ? 'before' : 'after'; // Show the loading message at the bottom of the page if there is no search for a show and show it at the top of the page if results only include 1st page of results and no show has been searched
+            let location = currentPage === 0 && !search || search ? 'before' : 'after'; // Show the loading message at the bottom of the page if there is no search for a show and show it at the top of the page if results only include 1st page of results and no show has been searched
             showLoadingMessage(location);
                         
             return $.ajax(url).then(function(results) {
@@ -160,19 +160,21 @@ $(document).ready(function() {
                         image: result.image ? result.image.medium : null
                     }
                     
-                    search ? add(show,true) : add(show);  // add the show to tvShowsList array if a search has not been made and add show to filteredTVShowsList array if a search has been made
+                    search ? add(show,'filtered') : add(show,'all');  // add the show to tvShowsList array if a search has not been made and add show to filteredTVShowsList array if a search has been made
                 });
                 removeLoadingMessage();
-            }).catch(function(error) {
+            }).catch(function() {
                 removeLoadingMessage();
             });
         }
 
         // Functions to show content
         function displayShows(shows) {
+            // Reset all content (not search form) before adding new content
+            $('#tv-shows-list').empty(); 
+            $('.load-more,.no-results-message').remove();
             // if there are shows to display
-            if (shows.length > 0) {
-                $('#tv-shows-list').html('');
+            if (shows.length > 0) {                
                 let sortFactor = tvShowsApp.getSortFactor();
                 // if a sorting factor has been selected, sort TV shows
                 if (sortFactor) {
@@ -182,7 +184,7 @@ $(document).ready(function() {
                 shows.forEach((show) => tvShowsApp.addListItem(show)); // add each show to the TV shows list              
                 addLoadMoreButton(); 
             } else {
-                $('#tv-shows-list').html('<p>No shows found.</p>');
+                $('#tv-shows').prepend('<div class="alert alert-warning no-results-message">No shows found.</div>');
             }     
         }
 
@@ -223,8 +225,7 @@ $(document).ready(function() {
                                 </div>
                             `;
                             break;
-                        case 'cast':
-                            
+                        case 'cast': {                            
                             let castAge = getAge(new Date(info.person.birthday));                            
                             let castLife = info.person.deathday ? `<p><b>Lived:</b>${new Date(info.person.birthday).getFullYear()}-${new Date().getFullYear}`: `<p><b>Age:</b> ${castAge}`;
                             let castDataContent = info.person.country? `<p><b>Country:</b> ${info.person.country.name} </p>`: '';
@@ -245,12 +246,13 @@ $(document).ready(function() {
                                 </div>
                             `;
                             break;
-                        case 'crew':
+                        }                            
+                        case 'crew': {                            
                             let crewAge = getAge(new Date(info.person.birthday));
                             let crewLife = info.person.deathday ? `<p><b>Lived:</b>${new Date(info.person.birthday).getFullYear()}-${new Date().getFullYear}`: `<p><b>Age:</b> ${crewAge}`;
                             let crewDataContent = info.person.country? `<p><b>Country:</b> ${info.person.country.name} </p>`: '' 
                             crewDataContent += crewLife;
-                            
+                        
                             carouselItems += 
                                 `
                                     <div class="carousel-item ${isActive}">
@@ -261,6 +263,7 @@ $(document).ready(function() {
                                     </div>
                                 `;
                             break;
+                        }                            
                     }         
                 });
 
@@ -289,16 +292,16 @@ $(document).ready(function() {
                     selector: '[data-toggle="popover"]',
                     trigger: 'click hover'
                 }); // use popover for more details about crew/cast members (shows when hovering/clicking on member's name)
-                $('#'+type).html(carousel); // add carousel to tab content that corresponds to the type argument passed into function
+                $('#'+type).empty().append(carousel); // add carousel to tab content that corresponds to the type argument passed into function
             }).catch(function() {
-                $('#'+type).html('An error has occurred.');
+                $('#'+type).empty().append('<p>An error has occurred.</p>');
             });
         }
 
         function showInfo({id,name,genres,rating,image,summary,language,country,premiered,schedule,network,status}) {  
             // Remove current TV show image (if exists) before adding new image (if exists)
-            if ($('.modal-body .img-container img').length > 0) $('.modal-body .img-container img').remove();
-            if (image) $('.modal-body .img-container').html(`<img src="${image}" class="img-fluid mx-auto" alt="image of ${name}" />`);
+            if ($('.modal-body .img-container img').length > 0) $('.modal-body .img-container').empty();
+            if (image) $('.modal-body .img-container').append(`<img src="${image}" class="img-fluid mx-auto" alt="image of ${name}" />`);
             // Focus content on the first tab (summary)
             $('.nav-link, .tab-pane').removeClass('active show');
             $('#summary-tab, #summary').addClass('active');
@@ -311,7 +314,7 @@ $(document).ready(function() {
                 <p><span class="premiered ${sortingFactor === 'premiered' ? 'highlighted': ''}">Premiered:</span> ${premiered} </p> 
                 <p><span class="status ${sortingFactor === 'status' ? 'highlighted': ''}">Status:</span> ${status ? status: 'N/A'}</p>   
                 <p><span class="network ${sortingFactor === 'network' ? 'highlighted': ''}">Network:</span> ${network ? network : 'N/A'} </p>     
-                <p><span class="schedule">Schedule:</span> ${schedule.days.join(', ')} ${schedule.time ? "at " + schedule.time : ''}        
+                <p><span class="schedule">Schedule:</span> ${schedule.days.join(', ')} ${schedule.time ? `at ${schedule.time}` : ''}        
                 <p><span class="rating ${sortingFactor === 'rating' ? 'highlighted': ''}">Rating:</span> ${rating ? rating : 'N/A'}</p>
                 <p><span class="genres">Genres:</span>
             `;
@@ -327,9 +330,9 @@ $(document).ready(function() {
                 detailsHTML += '</p>'; 
             }
             
-            $('.modal-title').html('').append(name);
-            $('#details').html('').append(detailsHTML);
-            $('#summary').html('').append(summary);
+            $('.modal-title').empty().append(name);
+            $('#details').empty().append(detailsHTML);
+            $('#summary').empty().append(summary);
 
             $('.nav-link').click(function() {
                 let targetTabPaneID = $(this).attr('href');
@@ -345,7 +348,7 @@ $(document).ready(function() {
         function showLoadingMessage(location) {
             // 'location' parameter will be either 'before' or 'after'
             if ($('.loading-message-container').length > 0) $('.loading-message-container').remove();
-            loadingMessageDiv = $(
+            let loadingMessageDiv = $(
                 `
                 <div class="loading-message-container">
                     <div class="spinner-border" role="status"></div> 
@@ -380,7 +383,7 @@ $(document).ready(function() {
 
     // Make an API request to get TV shows and display them
     tvShowsApp.loadList().then(function() {
-        tvShowsApp.displayShows(tvShowsApp.getAll(false));
+        tvShowsApp.displayShows(tvShowsApp.getAll('all'));
     });
     
     $('#search').keyup(() => {
@@ -392,12 +395,12 @@ $(document).ready(function() {
             () => {           
                 // If search is empty, do not make an API request and show all TV shows from tvShowsList array  
                 if (search.length === 0) {
-                    tvShowsApp.displayShows(tvShowsApp.getAll(false));
+                    tvShowsApp.displayShows(tvShowsApp.getAll('all'));
                     return;
                 }
                 // If search isn't empty make an API request with the search term and display the results
                 tvShowsApp.loadList().then(function() {
-                    tvShowsApp.displayShows(tvShowsApp.getAll(true));                           
+                    tvShowsApp.displayShows(tvShowsApp.getAll('filtered'));                           
                 });            
             }
         ,500);
@@ -406,12 +409,12 @@ $(document).ready(function() {
     $('#sort-search').change(function() {
         let factor = $(this).val() === '' ? null : $(this).val();
         tvShowsApp.setSortFactor(factor);
-        let filteredTVShows = tvShowsApp.getAll(true); 
+        let filteredTVShows = tvShowsApp.getAll('filtered'); 
         // If a search has been made, sort those resulting shows, otherwise sort the regular list of TV shows
         if (filteredTVShows.length > 0) {
             tvShowsApp.displayShows(filteredTVShows);
         } else {
-            tvShowsApp.displayShows(tvShowsApp.getAll(false));
+            tvShowsApp.displayShows(tvShowsApp.getAll('all'));
         }
     });
     
@@ -420,7 +423,7 @@ $(document).ready(function() {
         // Make an API Request to get the next page of TV shows and display them
         tvShowsApp.setPage(tvShowsApp.getPage() + 1);
         tvShowsApp.loadList().then(function() {
-            tvShowsApp.displayShows(tvShowsApp.getAll(false));
+            tvShowsApp.displayShows(tvShowsApp.getAll('all'));
         });
     });
 });
