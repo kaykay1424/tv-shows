@@ -13,6 +13,7 @@ $(document).ready(function() {
 
         // Helper Functions
         function debounce(func,timeout=500) {
+            console.log('bounce')
             clearTimeout(debounceTimer);
             debounceTimer = setTimeout(function() {
                 func();
@@ -136,7 +137,7 @@ $(document).ready(function() {
         function loadList() {
             let url = search && search !== '' ? apiSearchURL+search : `${apiURL}?page=${currentPage}`; // if a search for a show has been made use apiSearchURL, otherwise use apiURL to get current page of results
             let location = currentPage === 0 && !search || search ? 'before' : 'after'; // Show the loading message at the bottom of the page if there is no search for a show and show it at the top of the page if results only include 1st page of results and no show has been searched
-            showLoadingMessage(location);
+            showLoadingMessage('#tv-shows',location);
                         
             return $.ajax(url).then(function(results) {
                 filteredTVShowsList = [];
@@ -189,6 +190,8 @@ $(document).ready(function() {
         }
 
         function showExtraInfo(id,type) {
+            console.log('showing')
+            showLoadingMessage('.tab-pane.active','before');
             $.ajax(`${apiURL}/${id}/${type}`).then(function(results) {
                 let carouselIndicators = ``;
                 let carouselItems = ``;
@@ -292,20 +295,15 @@ $(document).ready(function() {
                     selector: '[data-toggle="popover"]',
                     trigger: 'click hover'
                 }); // use popover for more details about crew/cast members (shows when hovering/clicking on member's name)
-                $('#'+type).empty().append(carousel); // add carousel to tab content that corresponds to the type argument passed into function
+                removeLoadingMessage();
+                $('#'+type).append(carousel); // add carousel to tab content that corresponds to the type argument passed into function
             }).catch(function() {
-                $('#'+type).empty().append('<p>An error has occurred.</p>');
-            });
+                removeLoadingMessage();
+                $('#'+type).append('<p>An error has occurred.</p>');
+            });            
         }
 
         function showInfo({id,name,genres,rating,image,summary,language,country,premiered,schedule,network,status}) {  
-            // Remove current TV show image (if exists) before adding new image (if exists)
-            if ($('.modal-body .img-container img').length > 0) $('.modal-body .img-container').empty();
-            if (image) $('.modal-body .img-container').append(`<img src="${image}" class="img-fluid mx-auto" alt="image of ${name}" />`);
-            // Focus content on the first tab (summary)
-            $('.nav-link, .tab-pane').removeClass('active show');
-            $('#summary-tab, #summary').addClass('active');
-            $('#summary').addClass('show');
             let sortingFactor = getSortFactor();
             let detailsHTML = 
             `                    
@@ -330,23 +328,37 @@ $(document).ready(function() {
                 detailsHTML += '</p>'; 
             }
             
+            // Reset modal content before adding new content
+            $('.modal-body .img-container').empty().append(`<img src="${image}" class="img-fluid mx-auto" alt="image of ${name}" />`);
             $('.modal-title').empty().append(name);
-            $('#details').empty().append(detailsHTML);
-            $('#summary').empty().append(summary);
+            $('.tab-pane').each(function() {
+                $(this).empty();
+                if ($(this).prop('id') === 'details') $(this).append(detailsHTML);
+                if ($(this).prop('id') === 'summary') $(this).append(summary);
+            });
+
+            // Focus content on the first tab (summary)
+            $('.nav-link, .tab-pane').removeClass('active show');
+            $('#summary-tab, #summary').addClass('active');
+            $('#summary').addClass('show');
 
             $('.nav-link').click(function() {
                 let targetTabPaneID = $(this).attr('href');
                 let targetTabPaneName = targetTabPaneID.replace('#',''); // get name of tab pane that corresponds to tab link clicked
                 // Make an API request to get content that matches the tab clicked and display it in a carousel  
-                if (targetTabPaneName === 'seasons') showExtraInfo(id, 'seasons');
-                if (targetTabPaneName === 'episodes') showExtraInfo(id, 'episodes');
-                if (targetTabPaneName === 'cast') showExtraInfo(id, 'cast');
-                if (targetTabPaneName === 'crew') showExtraInfo(id, 'crew');
+                // Use debounce() so API request will only run once per click and only if the content has not already been loaded and added to tab content 
+                console.log($(targetTabPaneID).html().length)
+                if (targetTabPaneName === 'seasons' && $(targetTabPaneID).html().length === 0) debounce(() => showExtraInfo(id, 'seasons'));
+                if (targetTabPaneName === 'episodes') debounce(() => showExtraInfo(id, 'episodes'));
+                if (targetTabPaneName === 'cast') debounce(() => showExtraInfo(id, 'cast'));
+                if (targetTabPaneName === 'crew') debounce(() => showExtraInfo(id, 'crew'));
             });
         }
 
-        function showLoadingMessage(location) {
-            // 'location' parameter will be either 'before' or 'after'
+        function showLoadingMessage(selector,location) {
+            // 'selector' parameter will be css selector
+            // 'location' parameter will either be 'before' (prepend to selector) or 'after' (append to selector)
+            console.log('showing')
             if ($('.loading-message-container').length > 0) $('.loading-message-container').remove();
             let loadingMessageDiv = $(
                 `
@@ -356,7 +368,8 @@ $(document).ready(function() {
                 </div>
                 `
             );
-            location === 'before' ? $('#tv-shows').prepend(loadingMessageDiv): $('#tv-shows').append(loadingMessageDiv);            
+                      
+            location === 'prepend' ? $(selector).prepend(loadingMessageDiv) : $(selector).append(loadingMessageDiv);
         }
 
         // Functions to remove content
