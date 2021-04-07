@@ -4,32 +4,26 @@
         <meta charset="UTF-8">
         <meta http-equiv="X-UA-Compatible" content="IE=edge">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>TV Shows</title>
+        <title>TV Shows Explorer</title>
         <link href="logo.png" rel="shortcut icon">
         <!-- Google Fonts -->
-        <link rel="preconnect" href="https://fonts.gstatic.com">
-        <link
-            href="https://fonts.googleapis.com/css2?family=Anton&family=Fascinate&family=Lora:ital,wght@0,400;0,700;1,400;1,700&display=swap"
-            rel="stylesheet">
+        <link href="https://fonts.gstatic.com" rel="preconnect">
+        <link href="https://fonts.googleapis.com/css2?family=Anton&family=Fascinate&family=Lora:ital,wght@0,400;0,700;1,400;1,700&display=swap" rel="stylesheet">
         <!-- CSS -->
-        <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
-            integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
-        <link href="src/css/main.css" rel="stylesheet">
+        <!-- Bootstrap -->
+        <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+        <!-- / -->
+        <link href="dist/css/main.production.min.css" rel="stylesheet">
         <!-- JS -->
         <!-- Bootstrap -->
-        <script src="https://code.jquery.com/jquery-3.3.1.min.js"
-            integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"
-            integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1"
-            crossorigin="anonymous"></script>
-        <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"
-            integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM"
-            crossorigin="anonymous"></script>
+        <script src="https://code.jquery.com/jquery-3.3.1.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
+        <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
         <!-- Polyfills -->
         <script src="src/js/polyfill.min.js"></script>
         <script src="src/js/fetch.umd.js"></script>
         <!-- / -->
-        <script src="src/js/main.js"></script>
+        <script src="dist/js/main.js.min"></script>
     </head>
 
     <body>
@@ -52,7 +46,7 @@
                             </div> <!-- /column -->
                             <div class="col-12 col-sm-6 col-md-5 form-group">
                                 <select id="sort-search" class="form-control" aria-label="Sort Search">
-                                    <option value=''>Sort by</option>
+                                    <option value="">Sort by</option>
                                     <option value="language">Language</option>
                                     <option value="country">Country</option>
                                     <option value="premiered">Date Premiered</option>
@@ -87,36 +81,23 @@
                             <div class="row">
                                 <div class="col-md-12 col-lg-3">
                                     <div class="img-container"></div>
-                                    <div class="nav flex-column nav-pills" id="info-tabs" role="tablist"
-                                        aria-orientation="vertical">
-                                        <a class="nav-link active" id="summary-tab" data-toggle="pill" href="#summary"
-                                            role="tab" aria-controls="summary" aria-selected="true">Summary</a>
-                                        <a class="nav-link" id="details-tab" data-toggle="pill" href="#details" role="tab"
-                                            aria-controls="details" aria-selected="false">Details</a>
-                                        <a class="nav-link" id="seasons-tab" data-toggle="pill" href="#seasons" role="tab"
-                                            aria-controls="seasons" aria-selected="false">Seasons</a>
-                                        <a class="nav-link" id="episodes-tab" data-toggle="pill" href="#episodes" role="tab"
-                                            aria-controls="episodes" aria-selected="false">Episodes</a>
-                                        <a class="nav-link" id="cast-tab" data-toggle="pill" href="#cast" role="tab"
-                                            aria-controls="cast" aria-selected="false">Cast</a>
-                                        <a class="nav-link" id="crew-tab" data-toggle="pill" href="#crew" role="tab"
-                                            aria-controls="crew" aria-selected="false">Crew</a>
+                                    <div class="nav flex-column nav-pills" id="info-tabs" role="tablist" aria-orientation="vertical">
+                                        <a class="nav-link active" id="summary-tab" data-toggle="pill" href="#summary" role="tab" aria-controls="summary" aria-selected="true">Summary</a>
+                                        <a class="nav-link" id="details-tab" data-toggle="pill" href="#details" role="tab" aria-controls="details" aria-selected="false">Details</a>
+                                        <a class="nav-link" id="seasons-tab" data-toggle="pill" href="#seasons" role="tab" aria-controls="seasons" aria-selected="false">Seasons</a>
+                                        <a class="nav-link" id="episodes-tab" data-toggle="pill" href="#episodes" role="tab" aria-controls="episodes" aria-selected="false">Episodes</a>
+                                        <a class="nav-link" id="cast-tab" data-toggle="pill" href="#cast" role="tab" aria-controls="cast" aria-selected="false">Cast</a>
+                                        <a class="nav-link" id="crew-tab" data-toggle="pill" href="#crew" role="tab" aria-controls="crew" aria-selected="false">Crew</a>
                                     </div>
                                 </div> <!-- /column -->
                                 <div class="col-md-12 col-lg-9">
                                     <div class="tab-content" id="info-tab-content">
-                                        <div class="tab-pane fade show active" id="summary" role="tabpanel"
-                                            aria-labelledby="summary-tab"></div>
-                                        <div class="tab-pane fade" id="details" role="tabpanel"
-                                            aria-labelledby="details-tab"></div>
-                                        <div class="tab-pane fade" id="seasons" role="tabpanel"
-                                            aria-labelledby="seasons-tab"></div>
-                                        <div class="tab-pane fade" id="episodes" role="tabpanel"
-                                            aria-labelledby="episodes-tab"></div>
-                                        <div class="tab-pane fade" id="cast" role="tabpanel" aria-labelledby="cast-tab">
-                                        </div>
-                                        <div class="tab-pane fade" id="crew" role="tabpanel" aria-labelledby="crew-tab">
-                                        </div>
+                                        <div class="tab-pane fade show active" id="summary" role="tabpanel" aria-labelledby="summary-tab"></div>
+                                        <div class="tab-pane fade" id="details" role="tabpanel" aria-labelledby="details-tab"></div>
+                                        <div class="tab-pane fade" id="seasons" role="tabpanel" aria-labelledby="seasons-tab"></div>
+                                        <div class="tab-pane fade" id="episodes" role="tabpanel" aria-labelledby="episodes-tab"></div>
+                                        <div class="tab-pane fade" id="cast" role="tabpanel" aria-labelledby="cast-tab"></div>
+                                        <div class="tab-pane fade" id="crew" role="tabpanel" aria-labelledby="crew-tab"></div>
                                     </div>
                                 </div> <!-- /column -->
                             </div> <!-- /row -->
