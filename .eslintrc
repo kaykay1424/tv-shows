@@ -9,6 +9,7 @@
       "eslint:recommended"
     ],
     "rules": {
-      "quotes": ["error", "single",{ "allowTemplateLiterals": true }]
+      "quotes": ["error", "single",{ "allowTemplateLiterals": true }],
+      "no-console": "error"
     }
 }

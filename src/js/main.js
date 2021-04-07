@@ -13,7 +13,6 @@ $(document).ready(function() {
 
         // Helper Functions
         function debounce(func,timeout=500) {
-            console.log('bounce')
             clearTimeout(debounceTimer);
             debounceTimer = setTimeout(function() {
                 func();
@@ -94,10 +93,8 @@ $(document).ready(function() {
             if ($('.load-more.btn').length > 0) $('.load-more.btn').remove(); // remove any Load More buttons
             // Only add Load More button when all shows (not searched shows) are being shown
             if (search && search.length === 0 || !search) { 
-                $.get(`${apiURL}?page=${currentPage+1}`, (data,status) => {
-                    if (status !== 'error') {
-                        $('#tv-shows').append('<button class="btn load-more">Load More Shows</button>');
-                    }
+                $.ajax(`${apiURL}?page=${currentPage+1}`).then(() => {
+                    $('#tv-shows').append('<button class="btn load-more">Load More Shows</button>');
                 });
             }
         }
@@ -150,14 +147,14 @@ $(document).ready(function() {
                         id: result.id,
                         name: result.name,
                         country: result.network ? result.network.country.name : null,
-                        genres: result.genres,
-                        language: result.language,
+                        genres: result.genres ? result.genres : null,
+                        language: result.language ? result.language : null,
                         rating: result.rating.average ? result.rating.average : null,
                         premiered: new Date(result.premiered).getFullYear(),
-                        schedule: result.schedule,
+                        schedule: result.schedule ? result.schedule : null,
                         network: result.network ? result.network.name: null,
-                        summary: result.summary,
-                        status: result.status,
+                        summary: result.summary ? result.summary : null,
+                        status: result.status ? result.status : null,
                         image: result.image ? result.image.medium : null
                     }
                     
@@ -190,31 +187,40 @@ $(document).ready(function() {
         }
 
         function showExtraInfo(id,type) {
-            console.log('showing')
+            // 'id' paramenter is id of show and will be a number
+            // 'type' parameter is type of content to display (e.g seasons, cast)
             showLoadingMessage('.tab-pane.active','before');
+            let noResults = false;
+            let content;
             $.ajax(`${apiURL}/${id}/${type}`).then(function(results) {
                 let carouselIndicators = ``;
                 let carouselItems = ``;
                 let carouselID = 'carousel-'+type;
-                
+
+                if (results.length === 0) {
+                    noResults = true;
+                }
+
                 results.forEach((info,i) => {
                     let isActive = i === 0 ? 'active': '';
                     carouselIndicators += `<li data-target="${'#'+carouselID}" data-slide-to="${i}" class="${isActive}">${i+1}</li>`;
                     
                     switch(type) {
-                        case 'seasons':
+                        case 'seasons': {
+                            let seasonLength = info.premiereDate === info.endDate ? info.premiereDate : `${info.premiereDate.replace(/-/g,'/')} - ${info.endDate.replace(/-/g,'/')}`; // if season premiered and ended on same date only display premiered date
                             carouselItems += 
                             `
                                 <div class="carousel-item ${isActive}">
                                     <div class="carousel-item-header">
-                                        <h5>Season ${info.number} (${info.premiereDate.replace(/-/g,'/')} - ${info.endDate.replace(/-/g,'/')})</h5>
-                                        <p><b># of Episodes:</b> ${info.episodeOrder}</p>                            
+                                        <h5>Season ${info.number} (${seasonLength})</h5>
+                                        <p><b># of Episodes:</b> ${info.episodeOrder ? info.episodeOrder : 'N/A'}</p>                            
                                     </div>
                                     ${info.image ? `<img src="${info.image.medium}" class="img-fluid ${info.summary ? 'float-left': 'mx-auto'}" alt="image of season ${info.number}">`: ''}                            
                                     ${info.summary ? info.summary: ''}
                                 </div>
                             `;
                             break;
+                        }                            
                         case 'episodes':
                             carouselItems += 
                             `
@@ -269,34 +275,40 @@ $(document).ready(function() {
                         }                            
                     }         
                 });
-
-                let carousel = `
-                    <div id="${carouselID}" class="carousel slide" data-interval="false">                        
-                        <div class="carousel-inner">${carouselItems}</div>   
-                        <div class="carousel-controls">                     
-                            <a class="carousel-control-prev" href="${'#'+carouselID}" role="button" data-slide="prev">
-                                <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-                                <span class="sr-only">Previous</span>
-                            </a>
-                            <a class="carousel-control-next" href="${'#'+carouselID}" role="button" data-slide="next">
-                                <span class="carousel-control-next-icon" aria-hidden="true"></span>
-                                <span class="sr-only">Next</span>
-                            </a>
-                            <div class="carousel-indicators-container">
-                                <ol class="carousel-indicators">${carouselIndicators}</ol>
-                            </div>                            
+                
+                if (noResults) {
+                    content = '<p>No info found.</p>';
+                } else {
+                    let carousel = `
+                        <div id="${carouselID}" class="carousel slide" data-interval="false">                        
+                            <div class="carousel-inner">${carouselItems}</div>   
+                            <div class="carousel-controls">                     
+                                <a class="carousel-control-prev" href="${'#'+carouselID}" role="button" data-slide="prev">
+                                    <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                                    <span class="sr-only">Previous</span>
+                                </a>
+                                <a class="carousel-control-next" href="${'#'+carouselID}" role="button" data-slide="next">
+                                    <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                                    <span class="sr-only">Next</span>
+                                </a>
+                                <div class="carousel-indicators-container">
+                                    <ol class="carousel-indicators">${carouselIndicators}</ol>
+                                </div>                            
+                            </div>
                         </div>
-                    </div>
-                `;
-                $('body').popover({
-                    container: 'body',
-                    html: true,
-                    placement: 'top',
-                    selector: '[data-toggle="popover"]',
-                    trigger: 'click hover'
-                }); // use popover for more details about crew/cast members (shows when hovering/clicking on member's name)
+                    `;
+                    content = carousel;
+                    $('body').popover({
+                        container: 'body',
+                        html: true,
+                        placement: 'top',
+                        selector: '[data-toggle="popover"]',
+                        trigger: 'click hover'
+                    }); // use popover for more details about crew/cast members (shows when hovering/clicking on member's name)
+                }
+        
                 removeLoadingMessage();
-                $('#'+type).append(carousel); // add carousel to tab content that corresponds to the type argument passed into function
+                $('#'+type).append(content); // add content to tab content that corresponds to the type argument passed into function
             }).catch(function() {
                 removeLoadingMessage();
                 $('#'+type).append('<p>An error has occurred.</p>');
@@ -308,11 +320,11 @@ $(document).ready(function() {
             let detailsHTML = 
             `                    
                 <p><span class="country ${sortingFactor === 'country' ? 'highlighted': ''}">Country:</span> ${country ? country : 'N/A'} </p>    
-                <p><span class="language ${sortingFactor === 'language' ? 'highlighted': ''}">Language:</span> ${language} </p> 
-                <p><span class="premiered ${sortingFactor === 'premiered' ? 'highlighted': ''}">Premiered:</span> ${premiered} </p> 
+                <p><span class="language ${sortingFactor === 'language' ? 'highlighted': ''}">Language:</span> ${language ? language : 'N/A'} </p> 
+                <p><span class="premiered ${sortingFactor === 'premiered' ? 'highlighted': ''}">Premiered:</span> ${premiered ? premiered : 'N/A'} </p> 
                 <p><span class="status ${sortingFactor === 'status' ? 'highlighted': ''}">Status:</span> ${status ? status: 'N/A'}</p>   
                 <p><span class="network ${sortingFactor === 'network' ? 'highlighted': ''}">Network:</span> ${network ? network : 'N/A'} </p>     
-                <p><span class="schedule">Schedule:</span> ${schedule.days.join(', ')} ${schedule.time ? `at ${schedule.time}` : ''}        
+                <p><span class="schedule">Schedule:</span> ${schedule.time.length > 0 || schedule.days.length > 0 ? `${schedule.days.join(', ')} ${schedule.time ? `at ${schedule.time}` : ''} `: 'N/A'}      
                 <p><span class="rating ${sortingFactor === 'rating' ? 'highlighted': ''}">Rating:</span> ${rating ? rating : 'N/A'}</p>
                 <p><span class="genres">Genres:</span>
             `;
@@ -329,7 +341,7 @@ $(document).ready(function() {
             }
             
             // Reset modal content before adding new content
-            $('.modal-body .img-container').empty().append(`<img src="${image}" class="img-fluid mx-auto" alt="image of ${name}" />`);
+            if (image) $('.modal-body .img-container').empty().append(`<img src="${image}" class="img-fluid mx-auto" alt="image of ${name}" />`);
             $('.modal-title').empty().append(name);
             $('.tab-pane').each(function() {
                 $(this).empty();
@@ -347,18 +359,17 @@ $(document).ready(function() {
                 let targetTabPaneName = targetTabPaneID.replace('#',''); // get name of tab pane that corresponds to tab link clicked
                 // Make an API request to get content that matches the tab clicked and display it in a carousel  
                 // Use debounce() so API request will only run once per click and only if the content has not already been loaded and added to tab content 
-                console.log($(targetTabPaneID).html().length)
                 if (targetTabPaneName === 'seasons' && $(targetTabPaneID).html().length === 0) debounce(() => showExtraInfo(id, 'seasons'));
-                if (targetTabPaneName === 'episodes') debounce(() => showExtraInfo(id, 'episodes'));
-                if (targetTabPaneName === 'cast') debounce(() => showExtraInfo(id, 'cast'));
-                if (targetTabPaneName === 'crew') debounce(() => showExtraInfo(id, 'crew'));
+                if (targetTabPaneName === 'episodes'  && $(targetTabPaneID).html().length === 0) debounce(() => showExtraInfo(id, 'episodes'));
+                if (targetTabPaneName === 'cast'  && $(targetTabPaneID).html().length === 0) debounce(() => showExtraInfo(id, 'cast'));
+                if (targetTabPaneName === 'crew'  && $(targetTabPaneID).html().length === 0) debounce(() => showExtraInfo(id, 'crew'));
             });
         }
 
         function showLoadingMessage(selector,location) {
             // 'selector' parameter will be css selector
             // 'location' parameter will either be 'before' (prepend to selector) or 'after' (append to selector)
-            console.log('showing')
+
             if ($('.loading-message-container').length > 0) $('.loading-message-container').remove();
             let loadingMessageDiv = $(
                 `
