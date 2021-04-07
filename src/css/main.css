@@ -6,9 +6,6 @@
 }
 
 /* General */
-body,html {
-    margin: 0;
-}
 body {
     font-family: 'Lora', serif;
 }
@@ -45,7 +42,7 @@ img.mx-auto {
 .highlighted {
     background-color: rgb(119, 255, 119);
 }
-/* -Load Buttons */
+/* -Load More Buttons */
 .load-more {
     border: 1px solid var(--primary-color);
     display: block;
@@ -55,6 +52,7 @@ img.mx-auto {
     background-color: var(--primary-color);
     color: white;
 }
+/* -Loading Message */
 .loading-message-container {
     margin: 0 auto 0.5em auto;
     width: 25%;
@@ -63,6 +61,7 @@ img.mx-auto {
     height: 1rem;
     width: 1rem;
 }
+
 /* Components */
 /* -Carousel */
 .carousel-controls {
@@ -111,11 +110,14 @@ img.mx-auto {
     margin-bottom: 1em;
     margin-top: 1em;
 }
-#search-form div[class*="col"]:first-child {
+#search-form .form-group:first-child {
     align-items: center;
     border: 1px solid lightgray;
     display: inline-flex;
-    justify-content: space-between;
+    padding-left: 0;
+}
+#search-form .form-group:nth-child(2) {
+    padding-right: 0;
 }
 #search-form input {
     border: 0;
@@ -164,7 +166,7 @@ img.mx-auto {
 .modal-header {
     color: var(--primary-color);
     font-style: italic;
-    font-family: 'Anton',serif;
+    font-family: 'Anton', serif;
     margin-top: 0;
 }
 .modal-header .close {
@@ -195,6 +197,13 @@ img.mx-auto {
 }
 
 /* Media Queries */
+/* .col breakpoint */
+@media only screen and (max-width: 575px) {
+    #search-form .form-group:nth-child(2) {
+        padding-left: 0;
+        padding-right: 0;
+    }
+}
 /* .col-lg breakpoint */
 @media only screen and (max-width: 992px) {
     .nav-pills {
@@ -202,5 +211,3 @@ img.mx-auto {
         margin-bottom: 1em;
     }
 }
-
-
