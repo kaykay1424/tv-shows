@@ -1,14 +1,14 @@
 $(document).ready(function() {
     let tvShowsApp = (function() {
         // Variables
-        let tvShowsList = [];
-        let filteredTVShowsList = [];
-        let tvShowProps = ['id','name','genres','rating','image','network','schedule','language','country','status'];
-        let apiURL = 'https://api.tvmaze.com/shows';
-        let apiSearchURL = 'https://api.tvmaze.com/search/shows?q=';
+        const tvShowsList = []; // list of all TV shows (objects)
+        const filteredTVShowsList = []; // list of searched TV shows (objects)
+        const tvShowProps = ['id','name','genres','rating','image','network','schedule','language','country','status']; // properties each TV show object should have
+        const apiURL = 'https://api.tvmaze.com/shows';
+        const apiSearchURL = 'https://api.tvmaze.com/search/shows?q=';
         let currentPage = 0;
-        let search = null;
-        let sortFactor = null;
+        let search = null; // search word(s) entered in search form <input>
+        let sortFactor = null; // factor selected in search form <select> to sort TV shows
         let debounceTimer;
 
         // Helper Functions
@@ -20,43 +20,119 @@ $(document).ready(function() {
         }
 
         function getAge(birthdate) {            
-            let currentDate = new Date();
-            let age = currentDate.getFullYear() - birthdate.getFullYear();
-            // Subtract 1 from age if person's birthday hasn't occurred this year yet
-            if (birthdate.getMonth() > currentDate.getMonth()) { // if person's birthday is after current month
-                age -= 1;
-            } else if (birthdate.getMonth() === currentDate.getMonth()) {                                 
-                if (birthdate.getDay() < currentDate.getDay()) { // if person's birthday is in the current month but is before the current day
-                    age -= 1;
+            const currentDate = new Date();
+            const currentMonth = currentDate.getMonth();
+            const currentYear = currentDate.getFullYear();
+            const birthMonth = birthdate.getMonth();
+            const birthYear = birthdate.getFullYear();
+
+            return birthMonth > currentMonth // if person's birthday is after current month
+            || birthMonth === currentMonth && birthdate.getDay() < currentDate.getDay() // if person's birthday is in the current month but is before the current day                        
+            ? (currentYear - birthYear) - 1 // Subtract 1 from age if person's birthday hasn't occurred this year yet
+            : currentYear - birthYear
+        }
+
+        function getCarouselItem(type,info,isActive) {
+            let carouselItem;
+            const image = info.image ? info.image.medium : null;
+            const personImage = info.person.image ? info.person.image.medium : null;
+            const summary = info.summary;
+            switch(type) {
+                case 'seasons': {
+                    const endDate = info.endDate;
+                    const premiereDate = info.premiereDate;
+                    const seasonLength = premiereDate === endDate ? premiereDate : `${premiereDate.replace(/-/g,'/')} - ${endDate.replace(/-/g,'/')}`; // if season premiered and ended on same date only display premiered date
+                    const seasonNumber = info.number;
+                    carouselItem = 
+                    `
+                        <div class="carousel-item ${isActive}">
+                            <div class="carousel-item-header">
+                                <h5>Season ${seasonNumber} (${seasonLength})</h5>
+                                <p><b># of Episodes:</b> ${info.episodeOrder ? info.episodeOrder : 'N/A'}</p>                            
+                            </div>
+                            ${image ? `<img src="${image}" class="img-fluid ${summary ? 'float-left': 'mx-auto'}" alt="image of season ${seasonNumber}">`: ''}                            
+                            ${summary ? summary: ''}
+                        </div>
+                    `;
+                    break;
+                }                            
+                case 'episodes': {
+                    const episodeNum = info.number;
+                    carouselItem = 
+                    `
+                        <div class="carousel-item ${isActive}">
+                            <div class="carousel-item-header">
+                                <h5>${info.name} </h5>
+                                <p><b>Episode #${episodeNum}</b> (Season ${info.season})</p>
+                            </div>
+                            ${image ? `<img src="${image}" class="img-fluid ${summary ? 'float-left': 'mx-auto'}" alt="image of episode ${episodeNum}">`: ''}                            
+                            ${summary ? summary: ''}
+                        </div>
+                    `;
+                    break;
                 }
-            }
-            return age;
+                case 'cast': {  
+                    const castBirthday = new Date(info.person.birthday);    
+                    const actorName = info.person.name;                      
+                    const castAge = getAge(castBirthday);
+                    const castLife = info.person.deathday ? `<p><b>Lived:</b>${castBirthday.getFullYear()}-${new Date().getFullYear}`: `<p><b>Age:</b> ${castAge}`;
+                    const characterImage =  info.character.image ? info.character.image.medium: '';                         
+                    const characterName = info.character.name;
+                    let castDataContent = info.person.country? `<p><b>Country:</b> ${info.person.country.name} </p>`: '';
+                    castDataContent += castLife;
+                    carouselItem = 
+                    `
+                        <div class="carousel-item ${isActive}">
+                            <div class="carousel-item-header">
+                                <h5 data-toggle="popover" data-content="${castDataContent}">${actorName} (Actor) </h5>
+                                ${personImage ? `<img src="${personImage}" class="img-fluid mx-auto" alt="image of ${actorName}">`:''}
+                            </div>
+                            ${characterImage ? `
+                                <div>
+                                    <h5>${characterName} (Character)</h5><img src=${characterImage} class='img-fluid mx-auto' alt='image of ${characterName}"'>
+                                </div>`
+                                : ''
+                            }
+                        </div>
+                    `;
+                    break;
+                }                            
+                case 'crew': {
+                    const crewBirthdate = new Date(info.person.birthday);                            
+                    const crewAge = getAge(crewBirthdate);
+                    const crewLife = info.person.deathday ? `<p><b>Lived:</b>${crewBirthdate.getFullYear()}-${new Date().getFullYear}`: `<p><b>Age:</b> ${crewAge}`;
+                    const crewName = info.person.name;
+                    let crewDataContent = info.person.country? `<p><b>Country:</b> ${info.person.country.name} </p>`: '' 
+                    crewDataContent += crewLife;                        
+                    carouselItem = 
+                        `
+                            <div class="carousel-item ${isActive}">
+                                <div class="carousel-item-header">
+                                    <h5 data-toggle="popover" data-content="${crewDataContent}">${crewName} (${info.type})</h5>                                            
+                                </div>
+                                ${personImage ? `<img src="${personImage}" class="img-fluid mx-auto" alt="image of${crewName}">`: ''}
+                            </div>
+                        `;
+                    break;
+                }                            
+            }  
+            return carouselItem; 
         }
 
         function sortShows(factor) {
-            let shows = search ? filteredTVShowsList : tvShowsList;
-            shows = JSON.parse(JSON.stringify(shows)); // make copy to not alter original array
-            shows.sort((a,b) => {
+            return [... (search ? filteredTVShowsList : tvShowsList) ]  // make copy to not alter original array
+            .sort((a,b) => {
                 // String sorting
-                if (factor === 'country' || factor === 'language') {
+                if (factor === 'country' || factor === 'language' || factor === 'network' || factor === 'status') {
+                    const prop1 = a[factor] ? a[factor].toLowerCase().replace(/\s/g,''): null; 
+                    const prop2 = b[factor] ? b[factor].toLowerCase().replace(/\s/g,''): null; 
                     // check which properties (if any) are null
-                    if (a[factor] && b[factor]) { 
-                        let prop1 = a[factor].toLowerCase();
-                        let prop2 = b[factor].toLowerCase();
-                        if (prop1 > prop2 ) return 1;
-                        if (prop1 === prop2) return 0;
-                        if (prop1 < prop2) return -1;
-                    } else if (!a[factor] && !b[factor]) {
-                        return 0;
-                    } else if (!a[factor] && b[factor]) {
-                        return -1;
-                    } else {
-                        return 1;
-                    }
+                    if (((prop1 && prop2) && (prop1 > prop2)) || (prop1 && !prop2) ) return 1; // if both properties are not null and 1st property has a greater value than 2nd property or 1st property is not null but 2nd property is null (has less value)
+                    if (((prop1 && prop2) && (prop1 === prop2)) || (!prop1 && !prop2)) return 0; // if both properties are not null and have the same value or both properties are null
+                    if (((prop1 && prop2) && (prop1 < prop2)) || (!prop1 && prop2)) return -1; // if both properties are not null and 2nd property has a greater value than 1st property or 1st property is null (has less value) but 2nd property is not null
                 }
                 return a[factor] - b[factor];
             });
-            return shows;
         }
 
         // Functions to add content/data
@@ -73,16 +149,12 @@ $(document).ready(function() {
             } 
             // If show object is valid, add it to appropriate array based on 'typeOfList' parameter (will be either 'all' or 'filtered')
             if (isDataValid) {
-                if (typeOfList === 'filtered') {                    
-                    filteredTVShowsList.push(show);
-                } else {
-                    tvShowsList.push(show);
-                }                
+                typeOfList === 'filtered' ? filteredTVShowsList.push(show): tvShowsList.push(show);               
             }            
         }
 
         function addListItem(show) {            
-            let listItem = $(`<li class="show list-group-item list-group-item-action"></li>`);
+            const listItem = $(`<li class="show list-group-item list-group-item-action"></li>`);
             $(`<button class="btn btn-block text-left" data-target="#info-modal" data-toggle="modal">${show.name}</button>`).appendTo(listItem).on('click',() => {
                 showInfo(show); // open modal and display TV show details
             });
@@ -90,7 +162,8 @@ $(document).ready(function() {
         }
 
         function addLoadMoreButton() {
-            if ($('.load-more.btn').length > 0) $('.load-more.btn').remove(); // remove any Load More buttons
+            const loadMoreButton = $('.load-more');
+            if (loadMoreButton.length > 0) loadMoreButton.remove(); // remove any Load More buttons
             // Only add Load More button when all shows (not searched shows) are being shown
             if (search && search.length === 0 || !search) { 
                 $.ajax(`${apiURL}?page=${currentPage+1}`).then(() => {
@@ -101,12 +174,8 @@ $(document).ready(function() {
 
         // Functions to get variables
         function getAll(typeOfList) {
-            // 'typeOfList' parameter will be 'all' or 'filtered'
-           if (typeOfList === 'filtered') {
-            return filteredTVShowsList;
-           } 
-
-           return tvShowsList; 
+            // 'typeOfList' parameter will be 'all' or 'filtered'  
+           return typeOfList === 'filtered' ? filteredTVShowsList : tvShowsList; 
         }
 
         function getPage() {
@@ -132,18 +201,18 @@ $(document).ready(function() {
 
         // Functions to retrieve data from API
         function loadList() {
-            let url = search && search !== '' ? apiSearchURL+search : `${apiURL}?page=${currentPage}`; // if a search for a show has been made use apiSearchURL, otherwise use apiURL to get current page of results
-            let location = currentPage === 0 && !search || search ? 'before' : 'after'; // Show the loading message at the bottom of the page if there is no search for a show and show it at the top of the page if results only include 1st page of results and no show has been searched
+            const url = search ? apiSearchURL+search : `${apiURL}?page=${currentPage}`; // if a search for a show has been made use apiSearchURL, otherwise use apiURL to get current page of results
+            const location = currentPage === 0 && !search || search ? 'before' : 'after'; // Show the loading message at the bottom of the page if there is no search for a show and show it at the top of the page if results only include 1st page of results and no show has been searched
             showLoadingMessage('#tv-shows',location);
                         
             return $.ajax(url).then(function(results) {
-                filteredTVShowsList = [];
+                if (search) filteredTVShowsList.length = 0; // empty array so it will only hold current searched TV shows
                 results.forEach((result) => {                    
                     if (!result.name) { // if url is search url, show's properties from results are 1 level deeper in array
                         result = result.show;
                     }
 
-                    let show = {
+                    const show = {
                         id: result.id,
                         name: result.name,
                         country: result.network ? result.network.country.name : null,
@@ -173,7 +242,7 @@ $(document).ready(function() {
             $('.load-more,.no-results-message').remove();
             // if there are shows to display
             if (shows.length > 0) {                
-                let sortFactor = tvShowsApp.getSortFactor();
+                const sortFactor = tvShowsApp.getSortFactor();
                 // if a sorting factor has been selected, sort TV shows
                 if (sortFactor) {
                     shows = tvShowsApp.sortShows(sortFactor); 
@@ -201,85 +270,16 @@ $(document).ready(function() {
                     noResults = true;
                 }
 
-                results.forEach((info,i) => {
-                    let isActive = i === 0 ? 'active': '';
+                results.forEach((info,i) => {  
+                    const isActive = i === 0 ? 'active': '';                  
                     carouselIndicators += `<li data-target="${'#'+carouselID}" data-slide-to="${i}" class="${isActive}">${i+1}</li>`;
-                    
-                    switch(type) {
-                        case 'seasons': {
-                            let seasonLength = info.premiereDate === info.endDate ? info.premiereDate : `${info.premiereDate.replace(/-/g,'/')} - ${info.endDate.replace(/-/g,'/')}`; // if season premiered and ended on same date only display premiered date
-                            carouselItems += 
-                            `
-                                <div class="carousel-item ${isActive}">
-                                    <div class="carousel-item-header">
-                                        <h5>Season ${info.number} (${seasonLength})</h5>
-                                        <p><b># of Episodes:</b> ${info.episodeOrder ? info.episodeOrder : 'N/A'}</p>                            
-                                    </div>
-                                    ${info.image ? `<img src="${info.image.medium}" class="img-fluid ${info.summary ? 'float-left': 'mx-auto'}" alt="image of season ${info.number}">`: ''}                            
-                                    ${info.summary ? info.summary: ''}
-                                </div>
-                            `;
-                            break;
-                        }                            
-                        case 'episodes':
-                            carouselItems += 
-                            `
-                                <div class="carousel-item ${isActive}">
-                                    <div class="carousel-item-header">
-                                        <h5>${info.name} </h5>
-                                        <p><b>Episode #${info.number}</b> (Season ${info.season})</p>
-                                    </div>
-                                    ${info.image ? `<img src="${info.image.medium}" class="img-fluid ${info.summary ? 'float-left': 'mx-auto'}" alt="image of episode ${info.number}">`: ''}                            
-                                    ${info.summary ? info.summary: ''}
-                                </div>
-                            `;
-                            break;
-                        case 'cast': {                            
-                            let castAge = getAge(new Date(info.person.birthday));                            
-                            let castLife = info.person.deathday ? `<p><b>Lived:</b>${new Date(info.person.birthday).getFullYear()}-${new Date().getFullYear}`: `<p><b>Age:</b> ${castAge}`;
-                            let castDataContent = info.person.country? `<p><b>Country:</b> ${info.person.country.name} </p>`: '';
-                            castDataContent += castLife;
-                            carouselItems += 
-                            `
-                                <div class="carousel-item ${isActive}">
-                                    <div class="carousel-item-header">
-                                        <h5 data-toggle="popover" data-content="${castDataContent}">${info.person.name} (Actor) </h5>
-                                        <img src="${info.person.image.medium}" class="img-fluid mx-auto" alt="image of ${info.person.name}">
-                                    </div>
-                                    ${info.character.image ? `
-                                        <div>
-                                            <h5>${info.character.name} (Character)</h5><img src=${info.character.image.medium} class='img-fluid mx-auto' alt='image of ${info.character.name}"'>
-                                        </div>`
-                                        : ''
-                                    }
-                                </div>
-                            `;
-                            break;
-                        }                            
-                        case 'crew': {                            
-                            let crewAge = getAge(new Date(info.person.birthday));
-                            let crewLife = info.person.deathday ? `<p><b>Lived:</b>${new Date(info.person.birthday).getFullYear()}-${new Date().getFullYear}`: `<p><b>Age:</b> ${crewAge}`;
-                            let crewDataContent = info.person.country? `<p><b>Country:</b> ${info.person.country.name} </p>`: '' 
-                            crewDataContent += crewLife;
-                        
-                            carouselItems += 
-                                `
-                                    <div class="carousel-item ${isActive}">
-                                        <div class="carousel-item-header">
-                                            <h5 data-toggle="popover" data-content="${crewDataContent}">${info.person.name} (${info.type})</h5>                                            
-                                        </div>
-                                        ${info.person.image ? `<img src="${info.person.image.medium}" class="img-fluid mx-auto" alt="image of${info.person.name}">`: ''}
-                                    </div>
-                                `;
-                            break;
-                        }                            
-                    }         
+                    carouselItems += getCarouselItem(type,info,isActive);                         
                 });
                 
                 if (noResults) {
                     content = '<p>No info found.</p>';
                 } else {
-                    let carousel = `
+                    const carousel = `
                         <div id="${carouselID}" class="carousel slide" data-interval="false">                        
                             <div class="carousel-inner">${carouselItems}</div>   
                             <div class="carousel-controls">                     
@@ -311,12 +311,12 @@ $(document).ready(function() {
                 $('#'+type).append(content); // add content to tab content that corresponds to the type argument passed into function
             }).catch(function() {
                 removeLoadingMessage();
-                $('#'+type).append('<p>An error has occurred.</p>');
+                $('#'+type).append('<p>An error has occurred.</p>'); // add error message to tab content that corresponds to the type argument passed into function
             });            
         }
 
         function showInfo({id,name,genres,rating,image,summary,language,country,premiered,schedule,network,status}) {  
-            let sortingFactor = getSortFactor();
+            const sortingFactor = getSortFactor();
             let detailsHTML = 
             `                    
                 <p><span class="country ${sortingFactor === 'country' ? 'highlighted': ''}">Country:</span> ${country ? country : 'N/A'} </p>    
@@ -332,7 +332,7 @@ $(document).ready(function() {
             if (genres.length === 0) {
                 detailsHTML += 'N/A</p>';
             } else {
-                let genresArr = [];
+                const genresArr = [];
                 for (let i = 0; i < genres.length; i++) {
                     genresArr.push(genres[i])
                 }
@@ -355,8 +355,8 @@ $(document).ready(function() {
             $('#summary').addClass('show');
 
             $('.nav-link').click(function() {
-                let targetTabPaneID = $(this).attr('href');
-                let targetTabPaneName = targetTabPaneID.replace('#',''); // get name of tab pane that corresponds to tab link clicked
+                const targetTabPaneID = $(this).attr('href');
+                const targetTabPaneName = targetTabPaneID.replace('#',''); // get name of tab pane that corresponds to tab link clicked
                 // Make an API request to get content that matches the tab clicked and display it in a carousel  
                 // Use debounce() so API request will only run once per click and only if the content has not already been loaded and added to tab content 
                 if (targetTabPaneName === 'seasons' && $(targetTabPaneID).html().length === 0) debounce(() => showExtraInfo(id, 'seasons'));
@@ -366,12 +366,12 @@ $(document).ready(function() {
             });
         }
 
-        function showLoadingMessage(selector,location) {
+        function showLoadingMessage(selector, location) {
             // 'selector' parameter will be css selector
             // 'location' parameter will either be 'before' (prepend to selector) or 'after' (append to selector)
 
             if ($('.loading-message-container').length > 0) $('.loading-message-container').remove();
-            let loadingMessageDiv = $(
+            const loadingMessageDiv = $(
                 `
                 <div class="loading-message-container">
                     <div class="spinner-border" role="status"></div> 
@@ -411,7 +411,7 @@ $(document).ready(function() {
     });
     
     $('#search').keyup(() => {
-        let search = $('#search').val();
+        const search = $('#search').val();
         tvShowsApp.setSearch(search.length > 0 ? search : null);
 
         // Delay making an API request to search for a show until user has stopped typing for .5s
@@ -431,18 +431,12 @@ $(document).ready(function() {
     });
 
     $('#sort-search').change(function() {
-        let factor = $(this).val() === '' ? null : $(this).val();
-        tvShowsApp.setSortFactor(factor);
-        let filteredTVShows = tvShowsApp.getAll('filtered'); 
-        // If a search has been made, sort those resulting shows, otherwise sort the regular list of TV shows
-        if (filteredTVShows.length > 0) {
-            tvShowsApp.displayShows(filteredTVShows);
-        } else {
-            tvShowsApp.displayShows(tvShowsApp.getAll('all'));
-        }
+        tvShowsApp.setSortFactor($(this).val() === '' ? null : $(this).val()); // Set sortingFactor to option selected or to null if no factor was chosen        
+        const filteredTVShows = tvShowsApp.getAll('filtered');
+        filteredTVShows.length > 0 ? tvShowsApp.displayShows(filteredTVShows) : tvShowsApp.displayShows(tvShowsApp.getAll('all')); // If a search has been made, sort those resulting shows, otherwise sort the regular list of TV shows
     });
     
-    $(document).on('click','.load-more.btn',function() {
+    $(document).on('click', '.load-more', function() {
         $(this).remove();
         // Make an API Request to get the next page of TV shows and display them
         tvShowsApp.setPage(tvShowsApp.getPage() + 1);
