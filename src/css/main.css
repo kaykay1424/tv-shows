@@ -1,5 +1,8 @@
 /* Variables */
 :root {
+    /* -Bootstrap Colors */
+    --bg-dark-color: #343a40;
+    /* - */
     --primary-color: rgb(2, 100, 2);
     --secondary-color: rgb(90, 114, 81);
     --light-gray-color: #eeeeee;
@@ -13,7 +16,7 @@ h1 {
     color: var(--primary-color);
     font-family: 'Fascinate';
     text-align: center;
-    text-shadow: 1px 1px 1px #000;
+    text-shadow: 1px 1px 1px var(--bg-dark-color);
 }
 h1 img {
     height: 30px;
@@ -65,7 +68,7 @@ img.mx-auto {
 /* Components */
 /* -Carousel */
 .carousel-controls {
-    background-color: #000;
+    background-color: var(--bg-dark-color);
     position: relative;
 }
 .carousel-indicators {
@@ -90,6 +93,12 @@ img.mx-auto {
     text-align: center;
     width: 80%;
 }
+/* -Navbar */
+.navbar {
+    /* background-color: var(--primary-color); */
+    margin-bottom: 2em;
+    padding: 0;
+}
 /* -Nav Pills */
 .nav-pills .nav-link {
     color: var(--primary-color);
@@ -110,8 +119,12 @@ img.mx-auto {
     margin-bottom: 1em;
     margin-top: 1em;
 }
+#search-form .form-group {
+    margin-bottom: 0;
+}
 #search-form .form-group:first-child {
     align-items: center;
+    background-color: #fff;
     border: 1px solid lightgray;
     display: inline-flex;
     padding-left: 0;
@@ -159,6 +172,9 @@ img.mx-auto {
 .modal {
     padding: 0;
 }
+#info-modal .modal-dialog {
+    margin-top: 70px;
+}
 .modal-body {
     padding-left: 0;
     padding-right: 0;
@@ -173,7 +189,7 @@ img.mx-auto {
     right: 5px;
     top: 0;
 }
-.modal .carousel-item p:last-of-type {
+.modal .carousel-item-header ~ p:last-of-type {
     margin-bottom: 0;
 }
 /* -Carousel Item */
@@ -200,6 +216,7 @@ img.mx-auto {
 /* .col breakpoint */
 @media only screen and (max-width: 575px) {
     #search-form .form-group:nth-child(2) {
+        margin-top: 1em;
         padding-left: 0;
         padding-right: 0;
     }

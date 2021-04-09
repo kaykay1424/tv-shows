@@ -1,5 +1,5 @@
 {
-    "ignorePatterns": ["stylelint.config.js"],
+    "ignorePatterns": ["stylelint.config.js","main.min.js"],
     "env": {
       "es6": true,
       "jquery": true,

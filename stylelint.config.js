@@ -1,6 +1,7 @@
 "use strict"
 
 module.exports = {
+  "ignoreFiles": ["main.production.min.css"],
   "rules": {
     "at-rule-no-unknown": true,
     "block-no-empty": true,

@@ -1,5 +1,5 @@
-# TV Shows Explorer
-TV Shows Explorer lets users search for TV shows, sort TV shows by categories, such as language, and view details about TV shows, like the episodes and cast.
+# TV Show Explorer
+TV Show Explorer lets users search for TV shows, sort TV shows by categories, such as language, and view details about TV shows, like the episodes and cast.
 
 ## How to Get Started
 - [View the app](https://kaykay1424.github.io/tv-shows/)

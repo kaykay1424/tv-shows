@@ -35,7 +35,7 @@ $(document).ready(function() {
         function getCarouselItem(type,info,isActive) {
             let carouselItem;
             const image = info.image ? info.image.medium : null;
-            const personImage = info.person.image ? info.person.image.medium : null;
+            const personImage = info.person && info.person.image ? info.person.image.medium : null;
             const summary = info.summary;
             switch(type) {
                 case 'seasons': {
